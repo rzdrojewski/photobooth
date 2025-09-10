@@ -1,0 +1,21 @@
+# Node
+node_modules
+.pnpm-store
+.DS_Store
+
+# Env
+.env
+*.env.local
+
+# Builds
+dist
+out
+build
+**/.next
+# (kiosk retiré pour l’instant)
+
+# Prisma
+**/prisma/dev.db*
+
+# Storage
+apps/server/storage
