@@ -3,16 +3,16 @@
 High-level goal: One-click capture via gphoto2, show preview, and display a QR code to download the saved photo.
 
 ## Milestone 1 — Functional Prototype
-- [ ] Create `public/photos/` directory (git-keep as needed).
-- [ ] Add API route `src/app/api/capture/route.ts` (POST) that:
-  - [ ] Invokes `gphoto2` to capture and download a photo.
-  - [ ] Saves to `public/photos/<id>.jpg` (UUID timestamp).
-  - [ ] Returns JSON: `{ id, url }`.
-- [ ] Update `src/app/page.tsx` UI:
-  - [ ] Add "Take Photo" button (disable while capturing).
-  - [ ] Show captured image preview.
-  - [ ] Render QR code pointing to photo URL.
-- [ ] Add lightweight camera wrapper `src/lib/camera.ts` using `child_process.execFile`.
+- [x] Create `public/photos/` directory (git-keep as needed).
+- [x] Add API route `src/app/api/capture/route.ts` (POST) that:
+  - [x] Invokes `gphoto2` (trigger strategy: `--trigger-capture`, wait 0.5s, `--list-files`, `--get-file`).
+  - [x] Saves to `public/photos/<id>.jpg` (UUID timestamp).
+  - [x] Returns JSON: `{ id, url }`.
+- [x] Update `src/app/page.tsx` UI:
+  - [x] Add "Take Photo" button (disable while capturing).
+  - [x] Show captured image preview.
+  - [x] Render QR code pointing to photo URL.
+- [x] Add lightweight camera wrapper `src/lib/camera.ts` using `child_process.execFile`.
 
 ## Milestone 2 — UX & Reliability
 - [ ] Add server-side mutex/queue to prevent concurrent gphoto2 runs.
@@ -35,10 +35,13 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
   - macOS: grant Terminal/Node “Full Disk Access” if needed for downloads.
 
 ## Implementation Pointers
-- gphoto2 command example:
-  - `gphoto2 --capture-image-and-download --filename <file> --force-overwrite`
+- gphoto2 quick sequence (faster):
+  - `gphoto2 --trigger-capture`
+  - wait ~0.5s for save to complete
+  - `gphoto2 --list-files` → pick last index
+  - `gphoto2 --get-file <index> --filename <file> --force-overwrite`
 - Route handler lives at: `src/app/api/capture/route.ts` (export `POST`).
-- Generate QR: add `qrcode` package and render `<img src={qrDataUrl} />`.
+- QR generation: currently uses `https://api.qrserver.com` to render an image. Optional local alternative: add the `qrcode` package and render a data URL.
 
 ## Validation Checklist
 - [ ] Single click captures within ~2–5s.
