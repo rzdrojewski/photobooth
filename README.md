@@ -15,6 +15,7 @@ npm run dev
 # open http://localhost:3000
 ```
 - Connect a camera (often needs “PC/remote” mode).
+- Click “Detect Camera” to view ports and a device summary.
 - Click “Take Photo”. The image is saved to `public/photos/<id>.jpg` and served at `/photos/<id>.jpg` with a QR code for easy download.
 
 ## How It Works
@@ -37,6 +38,14 @@ npm start
     - `export GPHOTO2_PORT=usb:001,005 && npm run dev`
   - Or hardcode a port in code via `capturePhoto(..., { port: 'usb:001,005' })`.
   - Ensure the environment running Next.js has USB access (same user/session as your terminal).
+
+## Debug Mode
+- Enable verbose server logging for gphoto2 calls:
+  - `DEBUG_GPHOTO2=1 npm run dev`
+- Show the “Detect Camera” button and camera info panel in the UI:
+  - `NEXT_PUBLIC_DEBUG_PHOTOBOOTH=1 npm run dev`
+- You can set both to get UI tools and server logs at once:
+  - `DEBUG_GPHOTO2=1 NEXT_PUBLIC_DEBUG_PHOTOBOOTH=1 npm run dev`
 
 ## Notes & Safety
 - Files are publicly accessible under `/photos/`. There is no authentication—do not expose this app publicly without access controls.

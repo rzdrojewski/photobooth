@@ -20,11 +20,31 @@ function runGphoto(
   args: string[],
   timeout: number,
 ): Promise<{ stdout: string; stderr: string }> {
+  const debug = process.env.DEBUG_GPHOTO2 === "1";
+  if (debug) console.log(`[gphoto2] exec: ${bin} ${args.join(" ")}`);
   return new Promise((resolve, reject) => {
-    const child = execFile(bin, args, { timeout, encoding: "utf8" }, (err, stdout, stderr) => {
-      if (err) return reject(err);
-      resolve({ stdout: stdout ?? "", stderr: stderr ?? "" });
-    });
+    const child = execFile(
+      bin,
+      args,
+      { timeout, encoding: "utf8" },
+      (err, stdout, stderr) => {
+        const out = stdout ?? "";
+        const errOut = stderr ?? "";
+        if (debug) {
+          if (out) console.log(`[gphoto2] stdout:\n${out}`);
+          if (errOut) console.log(`[gphoto2] stderr:\n${errOut}`);
+        }
+        if (err) {
+          const wrapped = new Error(
+            `gphoto2 failed: ${err.message}\nargs: ${args.join(" ")}\nstdout:\n${out}\nstderr:\n${errOut}`,
+          );
+          // @ts-ignore attach context for server logs
+          (wrapped as any).code = (err as any).code;
+          return reject(wrapped);
+        }
+        resolve({ stdout: out, stderr: errOut });
+      },
+    );
     child.on("error", reject);
   });
 }
@@ -37,6 +57,29 @@ async function detectPort(bin: string, timeout: number): Promise<string | null> 
   } catch {
     return null;
   }
+}
+
+export async function getCameraInfo(bin?: string, port?: string | null, timeoutMs?: number) {
+  const timeout = timeoutMs ?? 15000;
+  const exe = bin || process.env.GPHOTO2_BIN || "gphoto2";
+  const auto = await runGphoto(exe, ["--auto-detect"], timeout);
+  const ports = Array.from(auto.stdout.matchAll(/usb:\d+,\d+/g)).map((m) => m[0]);
+  const selected = port || process.env.GPHOTO2_PORT || ports[0] || null;
+  let summary: string | null = null;
+  try {
+    if (selected) {
+      const res = await runGphoto(exe, ["--port", selected, "--summary"], timeout);
+      summary = res.stdout || res.stderr || null;
+    }
+  } catch (e) {
+    summary = (e as Error).message;
+  }
+  return {
+    ports,
+    selectedPort: selected,
+    autoDetectRaw: auto.stdout,
+    summaryRaw: summary,
+  };
 }
 
 export async function capturePhoto(
