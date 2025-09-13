@@ -41,7 +41,7 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
   - `gphoto2 --list-files` → pick last index
   - `gphoto2 --get-file <index> --filename <file> --force-overwrite`
 - Route handler lives at: `src/app/api/capture/route.ts` (export `POST`).
-- QR generation: currently uses `https://api.qrserver.com` to render an image. Optional local alternative: add the `qrcode` package and render a data URL.
+- QR generation: use local `qrcode` package to render a data URL on the client (no external service).
 
 ## Validation Checklist
 - [ ] Single click captures within ~2–5s.

@@ -39,7 +39,7 @@ export async function capturePhoto(
   ensureDir(dirname(outputFile));
 
   // 1) Trigger capture (non-blocking)
-  await runGphoto(bin, ["--trigger-capture", "--quiet"], timeout);
+  await runGphoto(bin, ["--trigger-capture"], timeout);
 
   // 2) Give the camera time to save the file
   await new Promise((r) => setTimeout(r, settleMs));

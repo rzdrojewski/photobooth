@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import * as QRCode from "qrcode";
 
 export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const absolutePhotoUrl = useMemo(() => {
     if (!photoUrl) return null;
@@ -17,10 +19,26 @@ export default function Home() {
     }
   }, [photoUrl]);
 
-  const qrSrc = useMemo(() => {
-    if (!absolutePhotoUrl) return null;
-    const data = encodeURIComponent(absolutePhotoUrl);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${data}`;
+  useEffect(() => {
+    let cancelled = false;
+    async function gen() {
+      setQrDataUrl(null);
+      if (!absolutePhotoUrl) return;
+      try {
+        const dataUrl = await QRCode.toDataURL(absolutePhotoUrl, {
+          width: 240,
+          margin: 1,
+          errorCorrectionLevel: "M",
+        });
+        if (!cancelled) setQrDataUrl(dataUrl);
+      } catch (e) {
+        if (!cancelled) setError("Failed to generate QR code");
+      }
+    }
+    gen();
+    return () => {
+      cancelled = true;
+    };
   }, [absolutePhotoUrl]);
 
   const onCapture = useCallback(async () => {
@@ -67,9 +85,9 @@ export default function Home() {
             />
             <div className="flex flex-col items-center gap-2">
               <p className="text-sm">Scan to download:</p>
-              {qrSrc ? (
+              {qrDataUrl ? (
                 <img
-                  src={qrSrc}
+                  src={qrDataUrl}
                   alt="QR code to download photo"
                   width={240}
                   height={240}
