@@ -131,6 +131,7 @@ export default function Home() {
     <div className="min-h-screen grid place-items-center p-8">
       <main className="flex flex-col items-center gap-6 w-full max-w-xl">
         <h1 className="text-2xl font-semibold">Zdro Photobooth</h1>
+        <a className="underline text-sm" href="/gallery">View Gallery</a>
         <div className="flex gap-3">
           <button
             onClick={onCapture}
