@@ -32,6 +32,11 @@ npm start
 ## Troubleshooting
 - Camera not detected: `gphoto2 --auto-detect`. On macOS, close Photos and `killall PTPCamera`. On Linux, unmount auto-mounted camera (GVFS) and check udev permissions.
 - Timeouts or empty capture: increase save delay in `src/lib/camera.ts` (`settleMs`, default 500ms), check cable/mode, or power cycle the camera.
+- Device not found from the app but works in terminal:
+  - Set the port explicitly using the value from `gphoto2 --auto-detect`:
+    - `export GPHOTO2_PORT=usb:001,005 && npm run dev`
+  - Or hardcode a port in code via `capturePhoto(..., { port: 'usb:001,005' })`.
+  - Ensure the environment running Next.js has USB access (same user/session as your terminal).
 
 ## Notes & Safety
 - Files are publicly accessible under `/photos/`. There is no authentication—do not expose this app publicly without access controls.
