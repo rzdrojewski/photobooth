@@ -5,6 +5,7 @@ import * as QRCode from "qrcode";
 
 export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isCountingDown, setIsCountingDown] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -19,6 +20,9 @@ export default function Home() {
   const isDebug =
     (process.env.NEXT_PUBLIC_DEBUG_PHOTOBOOTH ?? "") === "1" ||
     (process.env.NEXT_PUBLIC_DEBUG_PHOTOBOOTH ?? "").toLowerCase() === "true";
+
+  const countdownSeconds = Number(process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 3);
+  const [count, setCount] = useState<number>(countdownSeconds);
 
   const absolutePhotoUrl = useMemo(() => {
     if (!photoUrl) return null;
@@ -53,23 +57,56 @@ export default function Home() {
   }, [absolutePhotoUrl]);
 
   const onCapture = useCallback(async () => {
-    setIsCapturing(true);
     setError(null);
     setPhotoUrl(null);
-    try {
-      const res = await fetch("/api/capture", { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `Capture failed (${res.status})`);
+
+    const doCapture = async () => {
+      setIsCapturing(true);
+      try {
+        const res = await fetch("/api/capture", { method: "POST" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error || `Capture failed (${res.status})`);
+        }
+        const data = (await res.json()) as { url: string };
+        setPhotoUrl(data.url);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Unexpected error");
+      } finally {
+        setIsCapturing(false);
       }
-      const data = (await res.json()) as { url: string };
-      setPhotoUrl(data.url);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unexpected error");
-    } finally {
-      setIsCapturing(false);
+    };
+
+    let capturePromise: Promise<void> | null = null;
+    if (countdownSeconds > 0) {
+      setIsCountingDown(true);
+      setCount(countdownSeconds);
+      await new Promise<void>((resolve) => {
+        let remaining = countdownSeconds;
+        setCount(remaining);
+        const t = setInterval(() => {
+          remaining -= 1;
+          setCount(remaining);
+          // Trigger capture slightly early when 1s remains
+          if (remaining === 1 && !capturePromise) {
+            capturePromise = doCapture();
+          }
+          if (remaining <= 0) {
+            clearInterval(t);
+            setIsCountingDown(false);
+            resolve();
+          }
+        }, 1000);
+      });
+      if (!capturePromise) {
+        capturePromise = doCapture();
+      }
+      await capturePromise;
+      return;
     }
-  }, []);
+
+    await doCapture();
+  }, [countdownSeconds]);
 
   const onDetect = useCallback(async () => {
     setIsDetecting(true);
@@ -97,15 +134,19 @@ export default function Home() {
         <div className="flex gap-3">
           <button
             onClick={onCapture}
-            disabled={isCapturing}
+            disabled={isCapturing || isCountingDown}
             className="px-6 py-3 rounded-md bg-foreground text-background disabled:opacity-60"
           >
-            {isCapturing ? "Capturing…" : "Take Photo"}
+            {isCountingDown
+              ? `Get ready… ${count}`
+              : isCapturing
+              ? "Capturing…"
+              : "Take Photo"}
           </button>
           {isDebug && (
             <button
               onClick={onDetect}
-              disabled={isDetecting}
+              disabled={isDetecting || isCapturing || isCountingDown}
               className="px-6 py-3 rounded-md border border-black/10 dark:border-white/20 disabled:opacity-60"
             >
               {isDetecting ? "Detecting…" : "Detect Camera"}
@@ -168,6 +209,13 @@ export default function Home() {
           </div>
         )}
       </main>
+      {isCountingDown && (
+        <div className="fixed inset-0 grid place-items-center pointer-events-none">
+          <div className="text-[20vmin] font-bold opacity-70 select-none">
+            {count}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

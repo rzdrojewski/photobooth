@@ -6,6 +6,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Simple in-process queue to serialize captures
+let captureQueue: Promise<void> = Promise.resolve();
+async function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+  const waitFor = captureQueue.catch(() => {});
+  let release!: () => void;
+  captureQueue = new Promise<void>((res) => (release = res));
+  await waitFor;
+  try {
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
 function makeId() {
   const ts = new Date().toISOString().replace(/[:.]/g, "-");
   const id = typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -15,7 +29,7 @@ function makeId() {
 }
 
 export async function POST() {
-  try {
+  return enqueue(async () => {
     const id = makeId();
     const photosDir = join(process.cwd(), "public", "photos");
     ensureDir(photosDir);
@@ -34,12 +48,9 @@ export async function POST() {
 
     const url = `/photos/${filename}`;
     return NextResponse.json({ id, url }, { status: 200 });
-  } catch (err: unknown) {
+  }).catch((err: unknown) => {
     const message = err instanceof Error ? err.message : "Capture failed";
     console.error(`[capture] error: ${message}`);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
-  }
+    return NextResponse.json({ error: message }, { status: 500 });
+  });
 }

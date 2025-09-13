@@ -15,10 +15,11 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [x] Add lightweight camera wrapper `src/lib/camera.ts` using `child_process.execFile`.
 
 ## Milestone 2 — UX & Reliability
-- [ ] Add server-side mutex/queue to prevent concurrent gphoto2 runs.
-- [ ] Handle timeouts, non-zero exits, and missing camera errors with friendly messages.
-- [ ] Debounce/disable button to avoid double-clicks.
-- [ ] Simple loading state and error toasts.
+- [x] Add server-side mutex/queue to prevent concurrent gphoto2 runs.
+- [x] Handle timeouts, non-zero exits, and missing camera errors with friendly messages.
+- [x] Debounce/disable button to avoid double-clicks.
+- [x] Simple loading state and error messaging.
+- [x] Add configurable countdown before capture (`NEXT_PUBLIC_COUNTDOWN_SECONDS`, default 3).
 
 ## Milestone 3 — Ops & Housekeeping
 - [ ] Env vars: `PHOTO_DIR=public/photos`, `BASE_URL`, `GPHOTO2_BIN=gphoto2`.

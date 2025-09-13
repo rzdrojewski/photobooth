@@ -16,7 +16,7 @@ npm run dev
 ```
 - Connect a camera (often needs “PC/remote” mode).
 - Click “Detect Camera” to view ports and a device summary.
-- Click “Take Photo”. The image is saved to `public/photos/<id>.jpg` and served at `/photos/<id>.jpg` with a QR code for easy download.
+- Click “Take Photo”. A brief countdown appears, then the image is captured, saved to `public/photos/<id>.jpg`, and served at `/photos/<id>.jpg` with a QR code for easy download.
 
 ## How It Works
 - UI: `src/app/page.tsx` renders the button, preview, and a locally generated QR (using the `qrcode` package to create a data URL).
@@ -46,6 +46,8 @@ npm start
   - `NEXT_PUBLIC_DEBUG_PHOTOBOOTH=1 npm run dev`
 - You can set both to get UI tools and server logs at once:
   - `DEBUG_GPHOTO2=1 NEXT_PUBLIC_DEBUG_PHOTOBOOTH=1 npm run dev`
+- Configure countdown seconds (default 3):
+  - `NEXT_PUBLIC_COUNTDOWN_SECONDS=5 npm run dev`
 
 ## Notes & Safety
 - Files are publicly accessible under `/photos/`. There is no authentication—do not expose this app publicly without access controls.
