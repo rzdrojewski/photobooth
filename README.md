@@ -30,6 +30,16 @@ npm run build
 npm start
 ```
 
+## Environment Variables
+- `PHOTO_DIR` (default `public/photos`) — Directory to save photos. For public access, keep it inside `public/`.
+- `BASE_URL` (optional) — If set, API also returns an absolute URL in `absoluteUrl`.
+- `GPHOTO2_BIN` (optional) — Path to `gphoto2` binary.
+- `GPHOTO2_PORT` (optional) — e.g., `usb:001,005`. Overrides auto-detect.
+- `PHOTO_TTL_HOURS` (default `12`) — Used by cleanup script; age threshold for deletion.
+- `NEXT_PUBLIC_COUNTDOWN_SECONDS` (default `3`) — Countdown seconds in the UI.
+- `NEXT_PUBLIC_DEBUG_PHOTOBOOTH` (off) — Show detect button and camera info.
+- `DEBUG_GPHOTO2` (off) — Verbose server logs for gphoto2 calls.
+
 ## Troubleshooting
 - Camera not detected: `gphoto2 --auto-detect`. On macOS, close Photos and `killall PTPCamera`. On Linux, unmount auto-mounted camera (GVFS) and check udev permissions.
 - Timeouts or empty capture: increase save delay in `src/lib/camera.ts` (`settleMs`, default 500ms), check cable/mode, or power cycle the camera.
@@ -48,6 +58,17 @@ npm start
   - `DEBUG_GPHOTO2=1 NEXT_PUBLIC_DEBUG_PHOTOBOOTH=1 npm run dev`
 - Configure countdown seconds (default 3):
   - `NEXT_PUBLIC_COUNTDOWN_SECONDS=5 npm run dev`
+
+## Cleanup Old Photos
+- Remove files older than `PHOTO_TTL_HOURS` from `PHOTO_DIR`:
+```bash
+npm run cleanup:photos
+# e.g., PHOTO_TTL_HOURS=24 npm run cleanup:photos
+```
+- Set up a cron/systemd timer in production to run periodically.
+
+## Security Notes
+- The capture endpoint is unauthenticated by design; keep this app on a trusted network or behind your own reverse proxy with auth if needed.
 
 ## Notes & Safety
 - Files are publicly accessible under `/photos/`. There is no authentication—do not expose this app publicly without access controls.
