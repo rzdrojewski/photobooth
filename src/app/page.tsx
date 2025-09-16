@@ -43,7 +43,8 @@ export default function Home() {
         }
         router.push(`/capture/${data.id}`);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Unexpected error");
+        console.error("Capture failed", e);
+        setError(getCaptureErrorMessage(e));
       } finally {
         setIsCapturing(false);
       }
@@ -168,4 +169,9 @@ export default function Home() {
       )}
     </div>
   );
+}
+
+function getCaptureErrorMessage(error: unknown): string {
+  void error;
+  return "Capture failed. Please check the camera and try again.";
 }

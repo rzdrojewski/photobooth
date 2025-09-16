@@ -34,12 +34,6 @@ export default async function CaptureResultPage({ params }: Props) {
           >
             Take another photo
           </Link>
-          <Link
-            href="/gallery"
-            className="rounded-md border border-black/10 px-4 py-2 text-center dark:border-white/20"
-          >
-            View gallery
-          </Link>
         </div>
       </div>
     </div>
