@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 type Props = { params: { id: string } };
 
 export default async function PhotoDetailPage({ params }: Props) {
-  const photo = getPhotoById(params.id);
+  const { id } = await params;
+  const photo = getPhotoById(id);
   if (!photo) return notFound();
   return (
     <div className="grid h-screen grid-cols-5 overflow-hidden">

@@ -1,7 +1,12 @@
 import { join, relative, sep } from "node:path";
 import { NextResponse } from "next/server";
 
-import { downloadFramesRange, ensureDir, triggerCaptureAndGetIndex } from "@/lib/camera";
+import {
+  downloadFramesRange,
+  ensureDir,
+  getLatestIndices,
+  triggerCapture,
+} from "@/lib/camera";
 import { enqueueCapture } from "@/lib/capture-queue";
 import { makeId } from "@/lib/id";
 import { createMosaic } from "@/lib/mosaic";
@@ -32,27 +37,30 @@ export async function POST(request: Request) {
 
   if (payload.action === "assemble") {
     return enqueueCapture(async () => {
-      const rawIndices = Array.isArray(payload.indices) ? payload.indices : [];
-      const parsedIndices = rawIndices
-        .map((value) => Number(value))
-        .filter((value) => Number.isFinite(value));
-      if (!parsedIndices.length) {
-        return NextResponse.json({ error: "No frame indices provided" }, { status: 400 });
-      }
-      if (parsedIndices.length !== FRAME_COUNT) {
-        return NextResponse.json({ error: `Expected ${FRAME_COUNT} frames` }, { status: 400 });
-      }
-
       const id = makeId();
       const photoDirEnv = process.env.PHOTO_DIR || "public/photos";
       const photosDir = join(process.cwd(), photoDirEnv);
       const framesDir = join(photosDir, "bursts", id);
       ensureDir(framesDir);
 
-      const framePaths = await downloadFramesRange(parsedIndices, framesDir, opts);
-      if (framePaths.length !== parsedIndices.length) {
+      console.log(`[capture-burst] assembling id=${id}`);
+      const latestIndices = await getLatestIndices(FRAME_COUNT, opts);
+      if (latestIndices.length !== FRAME_COUNT) {
+        console.warn(
+          `[capture-burst] insufficient frames latest=${latestIndices.join(",")} expected=${FRAME_COUNT}`,
+        );
+        return NextResponse.json({ error: "Not enough frames captured" }, { status: 400 });
+      }
+      console.log(`[capture-burst] latest indices=${latestIndices.join(",")}`);
+
+      const framePaths = await downloadFramesRange(latestIndices, framesDir, opts);
+      if (framePaths.length !== latestIndices.length) {
+        console.error(
+          `[capture-burst] download mismatch expected=${latestIndices.length} actual=${framePaths.length}`,
+        );
         throw new Error("Failed to retrieve burst frames");
       }
+      console.log(`[capture-burst] downloaded ${framePaths.length} frames into ${framesDir}`);
 
       const mosaicFilename = `${id}-mosaic.jpg`;
       const mosaicPath = join(photosDir, mosaicFilename);
@@ -77,8 +85,10 @@ export async function POST(request: Request) {
   }
 
   return enqueueCapture(async () => {
-    const index = await triggerCaptureAndGetIndex(opts);
-    return NextResponse.json({ index }, { status: 200 });
+    console.log(`[capture-burst] trigger capture request`);
+    await triggerCapture(opts);
+    console.log(`[capture-burst] trigger capture succeeded`);
+    return NextResponse.json({ success: true }, { status: 200 });
   }).catch((err: unknown) => {
     const message = err instanceof Error ? err.message : "Capture failed";
     console.error(`[capture-burst] capture error: ${message}`);

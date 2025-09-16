@@ -155,6 +155,39 @@ export async function triggerCaptureAndGetIndex(
   return Math.max(...newIndices);
 }
 
+export async function triggerCapture(
+  options: CaptureOptions = {},
+): Promise<void> {
+  const bin = options.gphoto2Bin || process.env.GPHOTO2_BIN || "gphoto2";
+  const timeout = options.timeoutMs ?? 20000;
+  const settleMs = options.settleMs ?? 500;
+  const explicitPort = options.port || process.env.GPHOTO2_PORT || null;
+
+  const port = explicitPort || (await detectPort(bin, timeout));
+  const baseArgs = port ? ["--port", port] : [];
+
+  await runGphoto(bin, [...baseArgs, "--trigger-capture", "--quiet"], timeout);
+  await new Promise((resolve) => setTimeout(resolve, settleMs));
+}
+
+export async function getLatestIndices(
+  count: number,
+  options: CaptureOptions = {},
+): Promise<number[]> {
+  if (count <= 0) return [];
+  const bin = options.gphoto2Bin || process.env.GPHOTO2_BIN || "gphoto2";
+  const timeout = options.timeoutMs ?? 20000;
+  const explicitPort = options.port || process.env.GPHOTO2_PORT || null;
+
+  const port = explicitPort || (await detectPort(bin, timeout));
+  const baseArgs = port ? ["--port", port] : [];
+  const allIndices = await listFileIndices(bin, baseArgs, timeout);
+  console.log(`[getLatestIndices] found ${allIndices.length} total frames`);
+  console.log(`[getLatestIndices] all indices: ${allIndices.join(",")}`);
+  const sorted = allIndices.sort((a, b) => a - b);
+  return sorted.slice(-count);
+}
+
 export async function downloadFramesRange(
   indices: number[],
   destinationDir: string,
@@ -184,6 +217,8 @@ export async function downloadFramesRange(
     // ignore
   }
 
+  console.log(`running command : ${[bin, ...baseArgs, `--get-file=${rangeSpec}`, "--filename", join(destinationDir, "frame-%n.%C"), "--force-overwrite", "--quiet"].join(" ")}`);
+
   await runGphoto(
     bin,
     [...baseArgs, `--get-file=${rangeSpec}`, "--filename", join(destinationDir, "frame-%n.%C"), "--force-overwrite", "--quiet"],
@@ -194,8 +229,9 @@ export async function downloadFramesRange(
   const newFiles = afterFiles.filter((file) => !beforeFiles.has(file));
 
   const results: string[] = [];
-  for (let i = 0; i < sorted.length; i += 1) {
-    const index = sorted[i];
+  for (let i = 0; i < sorted.length ; i += 1) {
+    const index = i + 1;
+    console.log(`[downloadFramesRange] looking for frame-${index}`);
     const match = newFiles.find((file) => file.startsWith(`frame-${index}`));
     if (!match) {
       throw new Error(`Failed to download frame ${index}`);

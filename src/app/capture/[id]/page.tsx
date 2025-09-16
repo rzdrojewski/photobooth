@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 type Props = { params: { id: string } };
 
 export default async function CaptureResultPage({ params }: Props) {
-  const photo = getPhotoById(params.id);
+  const { id } = await params;
+  const photo = getPhotoById(id);
   if (!photo) return notFound();
 
   return (
