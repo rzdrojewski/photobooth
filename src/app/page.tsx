@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+const BURST_FRAME_COUNT = 4;
+
 export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
+  const [activeCapture, setActiveCapture] = useState<"single" | "burst" | null>(null);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -26,60 +29,110 @@ export default function Home() {
   const searchParams = useSearchParams();
   const hasAutoCapture = useRef(false);
 
-  const onCapture = useCallback(async () => {
-    setError(null);
+  const runCountdown = useCallback(async () => {
+    if (countdownSeconds <= 0) {
+      setCount(0);
+      setIsCountingDown(false);
+      return;
+    }
+    setIsCountingDown(true);
+    setCount(countdownSeconds);
+    await new Promise<void>((resolve) => {
+      let remaining = countdownSeconds;
+      setCount(remaining);
+      const timer = setInterval(() => {
+        remaining -= 1;
+        setCount(remaining);
+        if (remaining <= 0) {
+          clearInterval(timer);
+          setIsCountingDown(false);
+          resolve();
+        }
+      }, 1000);
+    });
+  }, [countdownSeconds]);
 
-    const doCapture = async () => {
+  const runCaptureFlow = useCallback(
+    async (
+      mode: "single" | "burst",
+      executor: () => Promise<void>,
+      options: { skipInitialCountdown?: boolean } = {},
+    ) => {
+      setError(null);
       setIsCapturing(true);
+      setActiveCapture(mode);
       try {
-        const res = await fetch("/api/capture", { method: "POST" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error || `Capture failed (${res.status})`);
+        if (!options.skipInitialCountdown) {
+          await runCountdown();
         }
-        const data = (await res.json()) as { id?: string };
-        if (!data?.id) {
-          throw new Error("Capture response missing id");
-        }
-        router.push(`/capture/${data.id}`);
+        await executor();
       } catch (e: unknown) {
         console.error("Capture failed", e);
         setError(getCaptureErrorMessage(e));
       } finally {
         setIsCapturing(false);
+        setActiveCapture(null);
       }
-    };
+    },
+    [runCountdown],
+  );
 
-    let capturePromise: Promise<void> | null = null;
-    if (countdownSeconds > 0) {
-      setIsCountingDown(true);
-      setCount(countdownSeconds);
-      await new Promise<void>((resolve) => {
-        let remaining = countdownSeconds;
-        setCount(remaining);
-        const t = setInterval(() => {
-          remaining -= 1;
-          setCount(remaining);
-          // Trigger capture slightly early when 1s remains
-          if (remaining === 1 && !capturePromise) {
-            capturePromise = doCapture();
-          }
-          if (remaining <= 0) {
-            clearInterval(t);
-            setIsCountingDown(false);
-            resolve();
-          }
-        }, 1000);
-      });
-      if (!capturePromise) {
-        capturePromise = doCapture();
+  const onCapture = useCallback(async () => {
+    await runCaptureFlow("single", async () => {
+      const res = await fetch("/api/capture", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Capture failed (${res.status})`);
       }
-      await capturePromise;
-      return;
-    }
+      const data = (await res.json()) as { id?: string };
+      if (!data?.id) {
+        throw new Error("Capture response missing id");
+      }
+      router.push(`/capture/${data.id}`);
+    });
+  }, [router, runCaptureFlow]);
 
-    await doCapture();
-  }, [countdownSeconds, router]);
+  const onBurstCapture = useCallback(async () => {
+    await runCaptureFlow(
+      "burst",
+      async () => {
+        const capturedIndices: number[] = [];
+        for (let shot = 0; shot < BURST_FRAME_COUNT; shot += 1) {
+          await runCountdown();
+          const res = await fetch("/api/capture/burst", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "capture" }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.error || `Capture failed (${res.status})`);
+          }
+          const data = (await res.json()) as { index?: number };
+          if (typeof data?.index !== "number") {
+            throw new Error("Capture response missing index");
+          }
+          capturedIndices.push(data.index);
+        }
+
+        const assembleRes = await fetch("/api/capture/burst", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "assemble", indices: capturedIndices }),
+        });
+        if (!assembleRes.ok) {
+          const body = await assembleRes.json().catch(() => ({}));
+          throw new Error(body?.error || `Capture failed (${assembleRes.status})`);
+        }
+        const assembleData = (await assembleRes.json()) as { id?: string };
+        if (!assembleData?.id) {
+          throw new Error("Capture response missing id");
+        }
+        router.push(`/capture/burst/${assembleData.id}`);
+      },
+      { skipInitialCountdown: true },
+    );
+  }, [router, runCaptureFlow, runCountdown]);
 
   const onDetect = useCallback(async () => {
     setIsDetecting(true);
@@ -102,18 +155,22 @@ export default function Home() {
 
   useEffect(() => {
     if (hasAutoCapture.current) return;
-    const shouldAutoCapture = searchParams?.get("autoCapture");
-    if (!shouldAutoCapture) return;
+    const mode = searchParams?.get("autoCapture");
+    if (!mode) return;
     hasAutoCapture.current = true;
-    void onCapture();
+    if (mode === "burst") {
+      void onBurstCapture();
+    } else {
+      void onCapture();
+    }
     router.replace("/", { scroll: false });
-  }, [onCapture, router, searchParams]);
+  }, [onBurstCapture, onCapture, router, searchParams]);
 
   return (
     <div className="min-h-screen grid place-items-center p-8">
       <main className="flex flex-col items-center gap-6 w-full max-w-xl">
-        <h1 className="text-2xl font-semibold">Fiesta Zdro</h1>
-        <div className="flex gap-3">
+        <h1 className="text-2xl font-semibold">Zdro Photobooth</h1>
+        <div className="flex flex-col items-center gap-3 sm:flex-row">
           <button
             onClick={onCapture}
             disabled={isCapturing || isCountingDown}
@@ -121,9 +178,20 @@ export default function Home() {
           >
             {isCountingDown
               ? `Get ready… ${count}`
-              : isCapturing
+              : isCapturing && activeCapture === "single"
               ? "Capturing…"
               : "Take Photo"}
+          </button>
+          <button
+            onClick={onBurstCapture}
+            disabled={isCapturing || isCountingDown}
+            className="px-6 py-3 rounded-md border border-black/10 dark:border-white/20 disabled:opacity-60"
+          >
+            {isCountingDown
+              ? `Get ready… ${count}`
+              : isCapturing && activeCapture === "burst"
+              ? "Capturing strip…"
+              : "Take Photo Strip"}
           </button>
           {isDebug && (
             <button

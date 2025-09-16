@@ -74,3 +74,9 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [ ] Optional optimizations:
   - [ ] Simple pagination or infinite scroll when many photos.
   - [ ] Thumbnail sizing via CSS now; consider pre-generating thumbnails later (e.g., with `sharp`).
+
+## Milestone 5 — Photo Strips
+
+- [x] Allow burst capture of four photos and merge into a mosaic result.
+- [ ] Generate GIF/video animations from burst frames.
+- [ ] Provide UI to review individual frames before composing.

@@ -1,35 +1,16 @@
-import { NextResponse } from "next/server";
 import { join, relative, sep } from "node:path";
+import { NextResponse } from "next/server";
+
 import { capturePhoto, ensureDir } from "@/lib/camera";
+import { enqueueCapture } from "@/lib/capture-queue";
+import { makeId } from "@/lib/id";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Simple in-process queue to serialize captures
-let captureQueue: Promise<void> = Promise.resolve();
-async function enqueue<T>(fn: () => Promise<T>): Promise<T> {
-  const waitFor = captureQueue.catch(() => {});
-  let release!: () => void;
-  captureQueue = new Promise<void>((res) => (release = res));
-  await waitFor;
-  try {
-    return await fn();
-  } finally {
-    release();
-  }
-}
-
-function makeId() {
-  const ts = new Date().toISOString().replace(/[:.]/g, "-");
-  const id = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
-  return `${ts}-${id}`;
-}
-
 export async function POST() {
-  return enqueue(async () => {
+  return enqueueCapture(async () => {
     const id = makeId();
     const photoDirEnv = process.env.PHOTO_DIR || "public/photos";
     const photosDir = join(process.cwd(), photoDirEnv);

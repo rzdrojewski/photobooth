@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { mkdirSync, readdirSync, renameSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 export type CaptureOptions = {
   gphoto2Bin?: string;
@@ -19,6 +19,7 @@ function runGphoto(
   bin: string,
   args: string[],
   timeout: number,
+  options: { cwd?: string } = {},
 ): Promise<{ stdout: string; stderr: string }> {
   const debug = process.env.DEBUG_GPHOTO2 === "1";
   if (debug) console.log(`[gphoto2] exec: ${bin} ${args.join(" ")}`);
@@ -26,7 +27,7 @@ function runGphoto(
     const child = execFile(
       bin,
       args,
-      { timeout, encoding: "utf8" },
+      { timeout, encoding: "utf8", cwd: options.cwd },
       (err, stdout, stderr) => {
         const out = stdout ?? "";
         const errOut = stderr ?? "";
@@ -82,6 +83,17 @@ export async function getCameraInfo(bin?: string, port?: string | null, timeoutM
   };
 }
 
+async function listFileIndices(
+  bin: string,
+  baseArgs: string[],
+  timeout: number,
+): Promise<number[]> {
+  const { stdout } = await runGphoto(bin, [...baseArgs, "--list-files"], timeout);
+  return Array.from(stdout.matchAll(/^#\s*(\d+)/gm))
+    .map((m) => Number(m[1]))
+    .filter((n) => Number.isFinite(n));
+}
+
 export async function capturePhoto(
   outputFile: string,
   options: CaptureOptions = {},
@@ -104,8 +116,7 @@ export async function capturePhoto(
   await new Promise((r) => setTimeout(r, settleMs));
 
   // 3) List files and pick the last index
-  const { stdout } = await runGphoto(bin, [...baseArgs, "--list-files"], timeout);
-  const indices = Array.from(stdout.matchAll(/^#\s*(\d+)/gm)).map((m) => Number(m[1])).filter((n) => Number.isFinite(n));
+  const indices = await listFileIndices(bin, baseArgs, timeout);
   if (!indices.length) {
     throw new Error("No files found on camera after capture");
   }
@@ -117,4 +128,88 @@ export async function capturePhoto(
     [...baseArgs, "--get-file", String(lastIndex), "--filename", outputFile, "--force-overwrite", "--quiet"],
     timeout,
   );
+}
+
+export async function triggerCaptureAndGetIndex(
+  options: CaptureOptions = {},
+): Promise<number> {
+  const bin = options.gphoto2Bin || process.env.GPHOTO2_BIN || "gphoto2";
+  const timeout = options.timeoutMs ?? 20000;
+  const settleMs = options.settleMs ?? 500;
+  const explicitPort = options.port || process.env.GPHOTO2_PORT || null;
+
+  const port = explicitPort || (await detectPort(bin, timeout));
+  const baseArgs = port ? ["--port", port] : [];
+
+  const before = await listFileIndices(bin, baseArgs, timeout);
+  const previousMax = before.length ? Math.max(...before) : 0;
+
+  await runGphoto(bin, [...baseArgs, "--trigger-capture", "--quiet"], timeout);
+  await new Promise((resolve) => setTimeout(resolve, settleMs));
+
+  const after = await listFileIndices(bin, baseArgs, timeout);
+  const newIndices = after.filter((idx) => idx > previousMax);
+  if (!newIndices.length) {
+    throw new Error("No files found on camera after capture");
+  }
+  return Math.max(...newIndices);
+}
+
+export async function downloadFramesRange(
+  indices: number[],
+  destinationDir: string,
+  options: CaptureOptions = {},
+): Promise<string[]> {
+  if (!indices.length) return [];
+
+  const bin = options.gphoto2Bin || process.env.GPHOTO2_BIN || "gphoto2";
+  const timeout = options.timeoutMs ?? 20000;
+  const explicitPort = options.port || process.env.GPHOTO2_PORT || null;
+
+  ensureDir(destinationDir);
+
+  const port = explicitPort || (await detectPort(bin, timeout));
+  const baseArgs = port ? ["--port", port] : [];
+  const sorted = Array.from(new Set(indices)).sort((a, b) => a - b);
+  const start = sorted[0];
+  const end = sorted[sorted.length - 1];
+  const rangeSpec = start === end ? String(start) : `${start}-${end}`;
+
+  const beforeFiles = new Set<string>();
+  try {
+    for (const file of readdirSync(destinationDir)) {
+      beforeFiles.add(file);
+    }
+  } catch {
+    // ignore
+  }
+
+  await runGphoto(
+    bin,
+    [...baseArgs, `--get-file=${rangeSpec}`, "--filename", join(destinationDir, "frame-%n.%C"), "--force-overwrite", "--quiet"],
+    timeout,
+  );
+
+  const afterFiles = readdirSync(destinationDir);
+  const newFiles = afterFiles.filter((file) => !beforeFiles.has(file));
+
+  const results: string[] = [];
+  for (let i = 0; i < sorted.length; i += 1) {
+    const index = sorted[i];
+    const match = newFiles.find((file) => file.startsWith(`frame-${index}`));
+    if (!match) {
+      throw new Error(`Failed to download frame ${index}`);
+    }
+    const ext = match.includes(".") ? match.slice(match.lastIndexOf(".")) : "";
+    const normalizedExt = ext ? ext.toLowerCase() : "";
+    const oldPath = join(destinationDir, match);
+    const newName = `frame-${i + 1}${normalizedExt}`;
+    const newPath = join(destinationDir, newName);
+    if (oldPath !== newPath) {
+      renameSync(oldPath, newPath);
+    }
+    results.push(newPath);
+  }
+
+  return results;
 }
