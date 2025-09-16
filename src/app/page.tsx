@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
@@ -23,6 +23,8 @@ export default function Home() {
   const [count, setCount] = useState<number>(countdownSeconds);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hasAutoCapture = useRef(false);
 
   const onCapture = useCallback(async () => {
     setError(null);
@@ -97,11 +99,19 @@ export default function Home() {
     }
   }, []);
 
+  useEffect(() => {
+    if (hasAutoCapture.current) return;
+    const shouldAutoCapture = searchParams?.get("autoCapture");
+    if (!shouldAutoCapture) return;
+    hasAutoCapture.current = true;
+    void onCapture();
+    router.replace("/", { scroll: false });
+  }, [onCapture, router, searchParams]);
+
   return (
     <div className="min-h-screen grid place-items-center p-8">
       <main className="flex flex-col items-center gap-6 w-full max-w-xl">
-        <h1 className="text-2xl font-semibold">Zdro Photobooth</h1>
-        <a className="underline text-sm" href="/gallery">View Gallery</a>
+        <h1 className="text-2xl font-semibold">Fiesta Zdro</h1>
         <div className="flex gap-3">
           <button
             onClick={onCapture}
