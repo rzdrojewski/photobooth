@@ -29,6 +29,7 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [x] Cleanup script to purge old photos: `npm run cleanup:photos` with `PHOTO_TTL_HOURS`.
 - [x] No PIN/auth in app. Keep on trusted network; add external auth if needed.
 - [x] Documentation updated (README: envs, cleanup, debug/countdown).
+- [x] Split configuration into dedicated sections with a shared navigation layout.
 
 ## Setup Notes
 
