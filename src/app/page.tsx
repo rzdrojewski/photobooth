@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import * as QRCode from "qrcode";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [cameraInfo, setCameraInfo] = useState<null | {
     ports: string[];
@@ -24,41 +22,10 @@ export default function Home() {
   const countdownSeconds = Number(process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 3);
   const [count, setCount] = useState<number>(countdownSeconds);
 
-  const absolutePhotoUrl = useMemo(() => {
-    if (!photoUrl) return null;
-    if (typeof window === "undefined") return photoUrl;
-    try {
-      return new URL(photoUrl, window.location.origin).toString();
-    } catch {
-      return photoUrl;
-    }
-  }, [photoUrl]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function gen() {
-      setQrDataUrl(null);
-      if (!absolutePhotoUrl) return;
-      try {
-        const dataUrl = await QRCode.toDataURL(absolutePhotoUrl, {
-          width: 240,
-          margin: 1,
-          errorCorrectionLevel: "M",
-        });
-        if (!cancelled) setQrDataUrl(dataUrl);
-      } catch (e) {
-        if (!cancelled) setError("Failed to generate QR code");
-      }
-    }
-    gen();
-    return () => {
-      cancelled = true;
-    };
-  }, [absolutePhotoUrl]);
+  const router = useRouter();
 
   const onCapture = useCallback(async () => {
     setError(null);
-    setPhotoUrl(null);
 
     const doCapture = async () => {
       setIsCapturing(true);
@@ -68,8 +35,11 @@ export default function Home() {
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error || `Capture failed (${res.status})`);
         }
-        const data = (await res.json()) as { url: string };
-        setPhotoUrl(data.url);
+        const data = (await res.json()) as { id?: string };
+        if (!data?.id) {
+          throw new Error("Capture response missing id");
+        }
+        router.push(`/capture/${data.id}`);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Unexpected error");
       } finally {
@@ -106,7 +76,7 @@ export default function Home() {
     }
 
     await doCapture();
-  }, [countdownSeconds]);
+  }, [countdownSeconds, router]);
 
   const onDetect = useCallback(async () => {
     setIsDetecting(true);
@@ -176,37 +146,6 @@ export default function Home() {
                 <pre className="text-xs whitespace-pre-wrap p-2 rounded bg-black/5 dark:bg-white/5 overflow-auto max-h-64">{cameraInfo.summaryRaw}</pre>
               </details>
             )}
-          </div>
-        )}
-
-        {photoUrl && (
-          <div className="flex flex-col items-center gap-4 w-full">
-            <img
-              src={photoUrl}
-              alt="Captured photo"
-              className="w-full max-w-md rounded border border-black/10 dark:border-white/15"
-            />
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-sm">Scan to download:</p>
-              {qrDataUrl ? (
-                <img
-                  src={qrDataUrl}
-                  alt="QR code to download photo"
-                  width={240}
-                  height={240}
-                />
-              ) : null}
-              {absolutePhotoUrl && (
-                <a
-                  className="underline text-sm break-all"
-                  href={absolutePhotoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {absolutePhotoUrl}
-                </a>
-              )}
-            </div>
           </div>
         )}
       </main>

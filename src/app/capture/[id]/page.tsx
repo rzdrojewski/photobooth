@@ -8,17 +8,24 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: { id: string } };
 
-export default async function PhotoDetailPage({ params }: Props) {
+export default async function CaptureResultPage({ params }: Props) {
   const photo = getPhotoById(params.id);
   if (!photo) return notFound();
+
   return (
     <div className="h-screen grid" style={{ gridTemplateRows: "auto 1fr" }}>
-      <div className="flex items-center p-3">
-        <Link href="/gallery" className="rounded-md bg-foreground px-4 py-2 text-background">
-          Back to gallery
+      <div className="p-3 flex items-center justify-between gap-3">
+        <Link href="/" className="px-4 py-2 rounded-md bg-foreground text-background">
+          Take another photo
+        </Link>
+        <Link
+          href="/gallery"
+          className="px-4 py-2 rounded-md border border-black/10 dark:border-white/20"
+        >
+          View gallery
         </Link>
       </div>
-      <div className="grid h-full min-h-0 grid-cols-5 overflow-hidden">
+      <div className="h-full min-h-0 grid grid-cols-5 overflow-hidden">
         <div className="box-border col-span-4 flex h-full min-h-0 w-full items-center justify-center overflow-hidden p-4">
           {/* biome-ignore lint/performance/noImgElement: Layout relies on object-contain sizing for arbitrary user uploads. */}
           <img
