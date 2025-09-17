@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { capturePhoto, ensureDir } from "@/lib/camera";
 import { enqueueCapture } from "@/lib/capture-queue";
+import { composeFrame } from "@/lib/frame";
 import { makeId } from "@/lib/id";
 
 export const runtime = "nodejs";
@@ -22,9 +23,15 @@ export async function POST() {
       port: process.env.GPHOTO2_PORT,
       gphoto2Bin: process.env.GPHOTO2_BIN,
     } as const;
-    console.log(`[capture] starting: file=${absolutePath} port=${opts.port ?? "<auto>"}`);
+    console.log(
+      `[capture] starting: file=${absolutePath} port=${opts.port ?? "<auto>"}`,
+    );
     const t0 = Date.now();
     await capturePhoto(absolutePath, opts);
+    const framed = await composeFrame("single", [absolutePath], absolutePath);
+    if (framed) {
+      console.log(`[capture] applied frame overlay for single capture`);
+    }
     const dt = Date.now() - t0;
     console.log(`[capture] success in ${dt}ms -> /photos/${filename}`);
 
@@ -33,7 +40,7 @@ export async function POST() {
     let url = `/photos/${filename}`;
     const relToPublic = relative(publicRoot, absolutePath);
     if (!relToPublic.startsWith("..")) {
-      url = "/" + relToPublic.split(sep).join("/");
+      url = `/${relToPublic.split(sep).join("/")}`;
     }
     const base = process.env.BASE_URL;
     const absoluteUrl = base ? new URL(url, base).toString() : undefined;

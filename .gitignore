@@ -45,3 +45,6 @@ public/photos/*.png
 public/photos/*.jpeg
 public/photos/*.webp
 public/photos/bursts/
+public/frames/*
+!public/frames/.gitkeep
+frame-data/

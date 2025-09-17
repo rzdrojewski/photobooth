@@ -8,7 +8,14 @@ const TABS = [
   {
     href: "/config/preview",
     title: "Preview lens",
-    description: "Select which camera lens powers the live preview before each capture.",
+    description:
+      "Select which camera lens powers the live preview before each capture.",
+  },
+  {
+    href: "/config/frames",
+    title: "Frames",
+    description:
+      "Upload decorative frames and define the photo drop zones for each capture mode.",
   },
   {
     href: "/config/countdown",
@@ -18,7 +25,8 @@ const TABS = [
   {
     href: "/config/storage",
     title: "Storage",
-    description: "Manage how long captures stay on disk and cleanup automation.",
+    description:
+      "Manage how long captures stay on disk and cleanup automation.",
   },
 ] as const;
 
@@ -28,14 +36,18 @@ type ConfigLayoutProps = {
 
 export default function ConfigLayout({ children }: ConfigLayoutProps) {
   const pathname = usePathname();
-  const activeTab = TABS.find((tab) => pathname?.startsWith(tab.href)) ?? TABS[0];
+  const activeTab =
+    TABS.find((tab) => pathname?.startsWith(tab.href)) ?? TABS[0];
 
   return (
     <div className="min-h-screen p-8 flex justify-center">
       <main className="w-full max-w-[80%] space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Camera Settings</h1>
-          <Link href="/" className="rounded-md border border-black/10 px-4 py-2 dark:border-white/20">
+          <Link
+            href="/"
+            className="rounded-md border border-black/10 px-4 py-2 dark:border-white/20"
+          >
             Back to booth
           </Link>
         </div>

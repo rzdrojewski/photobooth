@@ -81,3 +81,8 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [x] Allow burst capture of four photos and merge into a mosaic result.
 - [ ] Generate GIF/video animations from burst frames.
 - [ ] Provide UI to review individual frames before composing.
+
+## Milestone 6 — Frames & Branding
+
+- [x] Support configurable frames for single and burst captures with drop zones.
+- [x] Add config UI to upload PNG frames and edit zone placement per mode.

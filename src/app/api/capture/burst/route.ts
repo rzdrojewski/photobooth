@@ -8,6 +8,7 @@ import {
   triggerCapture,
 } from "@/lib/camera";
 import { enqueueCapture } from "@/lib/capture-queue";
+import { composeFrame } from "@/lib/frame";
 import { makeId } from "@/lib/id";
 import { createMosaic } from "@/lib/mosaic";
 
@@ -49,29 +50,43 @@ export async function POST(request: Request) {
         console.warn(
           `[capture-burst] insufficient frames latest=${latestIndices.join(",")} expected=${FRAME_COUNT}`,
         );
-        return NextResponse.json({ error: "Not enough frames captured" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Not enough frames captured" },
+          { status: 400 },
+        );
       }
       console.log(`[capture-burst] latest indices=${latestIndices.join(",")}`);
 
-      const framePaths = await downloadFramesRange(latestIndices, framesDir, opts);
+      const framePaths = await downloadFramesRange(
+        latestIndices,
+        framesDir,
+        opts,
+      );
       if (framePaths.length !== latestIndices.length) {
         console.error(
           `[capture-burst] download mismatch expected=${latestIndices.length} actual=${framePaths.length}`,
         );
         throw new Error("Failed to retrieve burst frames");
       }
-      console.log(`[capture-burst] downloaded ${framePaths.length} frames into ${framesDir}`);
+      console.log(
+        `[capture-burst] downloaded ${framePaths.length} frames into ${framesDir}`,
+      );
 
       const mosaicFilename = `${id}-mosaic.jpg`;
       const mosaicPath = join(photosDir, mosaicFilename);
       console.log(`[capture-burst] building mosaic ${mosaicPath}`);
-      await createMosaic(framePaths, mosaicPath);
+      const framed = await composeFrame("burst", framePaths, mosaicPath);
+      if (framed) {
+        console.log(`[capture-burst] applied burst frame overlay`);
+      } else {
+        await createMosaic(framePaths, mosaicPath);
+      }
 
       const publicRoot = join(process.cwd(), "public");
       let url = `/photos/${mosaicFilename}`;
       const relToPublic = relative(publicRoot, mosaicPath);
       if (!relToPublic.startsWith("..")) {
-        url = "/" + relToPublic.split(sep).join("/");
+        url = `/${relToPublic.split(sep).join("/")}`;
       }
       const base = process.env.BASE_URL;
       const absoluteUrl = base ? new URL(url, base).toString() : undefined;
