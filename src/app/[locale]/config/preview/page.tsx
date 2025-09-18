@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "photobooth.previewDeviceId";
@@ -7,6 +8,7 @@ const STORAGE_KEY = "photobooth.previewDeviceId";
 type VideoDevice = Pick<MediaDeviceInfo, "deviceId" | "label">;
 
 export default function PreviewSettingsPage() {
+  const t = useTranslations("configPreview");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [devices, setDevices] = useState<VideoDevice[]>([]);
@@ -33,7 +35,7 @@ export default function PreviewSettingsPage() {
         typeof navigator === "undefined" ||
         !navigator.mediaDevices?.getUserMedia
       ) {
-        setError("Camera APIs are not supported in this browser.");
+        setError(t("errors.unsupported"));
         return;
       }
       try {
@@ -52,15 +54,15 @@ export default function PreviewSettingsPage() {
         setError(null);
       } catch (err) {
         console.error("Preview start failed", err);
-        setError("Impossible de démarrer l’aperçu pour cet objectif.");
+        setError(t("errors.startFailed"));
       }
     },
-    [stopPreview],
+    [stopPreview, t],
   );
 
   const refreshDevices = useCallback(async () => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices) {
-      setError("Camera APIs are not supported in this browser.");
+      setError(t("errors.unsupported"));
       return;
     }
     setIsEnumerating(true);
@@ -91,13 +93,11 @@ export default function PreviewSettingsPage() {
       setSelectedId(initial);
     } catch (err) {
       console.error("Device enumeration failed", err);
-      setError(
-        "Impossible de récupérer la liste des caméras. Autorisez l’accès à la caméra.",
-      );
+      setError(t("errors.enumerationFailed"));
     } finally {
       setIsEnumerating(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     refreshDevices();
@@ -130,12 +130,10 @@ export default function PreviewSettingsPage() {
             className="w-full rounded-md border border-black/10 px-4 py-2 text-sm dark:border-white/20"
             disabled={isEnumerating}
           >
-            {isEnumerating ? "Refreshing…" : "Refresh list"}
+            {isEnumerating ? t("actions.refreshing") : t("actions.refresh")}
           </button>
           <div className="space-y-2">
-            {devices.length === 0 && (
-              <p className="text-sm">No cameras detected yet.</p>
-            )}
+            {devices.length === 0 && <p className="text-sm">{t("empty")}</p>}
             {devices.map((device) => (
               <label
                 key={device.deviceId}
@@ -149,7 +147,10 @@ export default function PreviewSettingsPage() {
                   onChange={() => setSelectedId(device.deviceId)}
                 />
                 <span>
-                  {device.label || `Camera ${device.deviceId.slice(-4)}`}
+                  {device.label ||
+                    t("cameraFallback", {
+                      id: device.deviceId.slice(-4),
+                    })}
                 </span>
               </label>
             ))}

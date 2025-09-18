@@ -1,14 +1,18 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useEventTitle } from "@/hooks/useEventTitle";
+import { useRouter } from "@/i18n/routing";
 
 export const BURST_FRAME_COUNT = 3;
 const PREVIEW_DEVICE_STORAGE_KEY = "photobooth.previewDeviceId";
 
 export default function Home() {
+  const t = useTranslations("home");
+  const commonT = useTranslations("common");
   const [isCapturing, setIsCapturing] = useState(false);
   const [activeCapture, setActiveCapture] = useState<"single" | "burst" | null>(
     null,
@@ -40,7 +44,7 @@ export default function Home() {
   const preferredDeviceIdRef = useRef<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [, setPreferredDeviceId] = useState<string | null>(null);
-  const { title } = useEventTitle();
+  const { title } = useEventTitle(commonT("eventTitleDefault"));
 
   const attachPreviewStream = useCallback(() => {
     if (previewVideoRef.current && previewStreamRef.current) {
@@ -268,13 +272,13 @@ export default function Home() {
         }
       } catch (e: unknown) {
         console.error("Capture failed", e);
-        setError(getCaptureErrorMessage(e));
+        setError(t("errors.captureFailed"));
       } finally {
         setIsCapturing(false);
         setActiveCapture(null);
       }
     },
-    [runCountdown],
+    [runCountdown, t],
   );
 
   const onCapture = useCallback(async () => {
@@ -288,7 +292,7 @@ export default function Home() {
       if (!data?.id) {
         throw new Error("Capture response missing id");
       }
-      router.push(`/capture/${data.id}`);
+      router.push({ pathname: "/capture/[id]", params: { id: data.id } });
     });
   }, [router, runCaptureFlow]);
 
@@ -329,7 +333,10 @@ export default function Home() {
         if (!assembleData?.id) {
           throw new Error("Capture response missing id");
         }
-        router.push(`/capture/burst/${assembleData.id}`);
+        router.push({
+          pathname: "/capture/burst/[id]",
+          params: { id: assembleData.id },
+        });
       },
       { skipInitialCountdown: true },
     );
@@ -348,11 +355,11 @@ export default function Home() {
       const data = await res.json();
       setCameraInfo(data);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unexpected error");
+      setError(e instanceof Error ? e.message : t("errors.unexpected"));
     } finally {
       setIsDetecting(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (hasAutoCapture.current) return;
@@ -364,7 +371,7 @@ export default function Home() {
     } else {
       void onCapture();
     }
-    router.replace("/", { scroll: false });
+    router.replace({ pathname: "/" }, { scroll: false });
   }, [onBurstCapture, onCapture, router, searchParams]);
 
   return (
@@ -390,8 +397,8 @@ export default function Home() {
                   className="flex-1 rounded-2xl bg-foreground px-10 py-6 text-xl font-semibold text-background transition disabled:opacity-60 sm:text-2xl"
                 >
                   {isCapturing && activeCapture === "single"
-                    ? "Capturing…"
-                    : "Take Photo"}
+                    ? t("actions.capturingSingle")
+                    : t("actions.takeSingle")}
                 </button>
                 <button
                   type="button"
@@ -400,8 +407,8 @@ export default function Home() {
                   className="flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-xl font-semibold text-white transition disabled:opacity-60 sm:text-2xl"
                 >
                   {isCapturing && activeCapture === "burst"
-                    ? "Capturing strip…"
-                    : "Take Photo Strip"}
+                    ? t("actions.capturingBurst")
+                    : t("actions.takeBurst")}
                 </button>
                 {isDebug && (
                   <button
@@ -410,7 +417,9 @@ export default function Home() {
                     disabled={isDetecting || isCapturing}
                     className="flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-lg font-medium text-white transition disabled:opacity-60"
                   >
-                    {isDetecting ? "Detecting…" : "Detect Camera"}
+                    {isDetecting
+                      ? t("actions.detecting")
+                      : t("actions.detectCamera")}
                   </button>
                 )}
               </div>
@@ -425,22 +434,23 @@ export default function Home() {
             {isDebug && cameraInfo && (
               <div className="w-full max-w-xl rounded-xl border border-white/20 bg-black/40 p-4 shadow-lg backdrop-blur">
                 <h2 className="mb-2 text-lg font-medium text-white">
-                  Camera Info
+                  {t("debug.title")}
                 </h2>
                 <div className="mb-2 text-sm text-white">
                   <div>
-                    Ports:{" "}
+                    {t("debug.ports")}:{" "}
                     {cameraInfo.ports?.length
                       ? cameraInfo.ports.join(", ")
-                      : "(none)"}
+                      : commonT("none")}
                   </div>
                   <div>
-                    Selected Port: {cameraInfo.selectedPort ?? "(none)"}
+                    {t("debug.selectedPort")}:{" "}
+                    {cameraInfo.selectedPort ?? commonT("none")}
                   </div>
                 </div>
                 <details className="mb-2 text-white">
                   <summary className="cursor-pointer">
-                    Auto-detect Output
+                    {t("debug.autoDetectOutput")}
                   </summary>
                   <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-black/60 p-2 text-xs text-white">
                     {cameraInfo.autoDetectRaw}
@@ -448,7 +458,9 @@ export default function Home() {
                 </details>
                 {cameraInfo.summaryRaw && (
                   <details className="text-white">
-                    <summary className="cursor-pointer">Summary</summary>
+                    <summary className="cursor-pointer">
+                      {t("debug.summary")}
+                    </summary>
                     <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-black/60 p-2 text-xs text-white">
                       {cameraInfo.summaryRaw}
                     </pre>
@@ -479,9 +491,4 @@ export default function Home() {
       )}
     </div>
   );
-}
-
-function getCaptureErrorMessage(error: unknown): string {
-  void error;
-  return "Capture failed. Please check the camera and try again.";
 }

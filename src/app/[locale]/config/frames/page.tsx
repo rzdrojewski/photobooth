@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { type ChangeEvent, useCallback, useEffect, useState } from "react";
 
 type FrameMode = "single" | "burst";
@@ -35,9 +36,9 @@ type FrameState = {
   status: string | null;
 };
 
-const MODE_LABELS: Record<FrameMode, string> = {
-  single: "Single capture",
-  burst: "Burst capture",
+const MODE_LABEL_KEYS: Record<FrameMode, string> = {
+  single: "modes.single",
+  burst: "modes.burst",
 };
 
 const DEFAULT_STATE: FrameState = {
@@ -125,6 +126,7 @@ function ensureId(base: string) {
 }
 
 export default function FrameSettingsPage() {
+  const t = useTranslations("configFrames");
   const [mode, setMode] = useState<FrameMode>("single");
   const [states, setStates] =
     useState<Record<FrameMode, FrameState>>(createInitialState);
@@ -146,50 +148,53 @@ export default function FrameSettingsPage() {
     });
   }, [state.loading, state.zones]);
 
-  const fetchConfig = useCallback(async (target: FrameMode) => {
-    setStates((prev) => ({
-      ...prev,
-      [target]: { ...prev[target], loading: true, error: null, status: null },
-    }));
-    try {
-      const res = await fetch(`/api/config/frame/${target}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        throw new Error(`Failed to load configuration (${res.status})`);
+  const fetchConfig = useCallback(
+    async (target: FrameMode) => {
+      setStates((prev) => ({
+        ...prev,
+        [target]: { ...prev[target], loading: true, error: null, status: null },
+      }));
+      try {
+        const res = await fetch(`/api/config/frame/${target}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          throw new Error(t("errors.loadFailedStatus", { status: res.status }));
+        }
+        const data = (await res.json()) as FrameConfigResponse;
+        setStates((prev) => ({
+          ...prev,
+          [target]: {
+            ...prev[target],
+            loading: false,
+            loaded: true,
+            imageUrl: data.imageUrl
+              ? `${data.imageUrl}${data.updatedAt ? `?v=${encodeURIComponent(data.updatedAt)}` : ""}`
+              : null,
+            zones: (data.zones ?? []).map((zone) => normalizeZone(zone)),
+            width: data.width ?? null,
+            height: data.height ?? null,
+            dirty: false,
+            error: null,
+            status: null,
+          },
+        }));
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : t("errors.loadFailed");
+        setStates((prev) => ({
+          ...prev,
+          [target]: {
+            ...prev[target],
+            loading: false,
+            loaded: true,
+            error: message,
+          },
+        }));
       }
-      const data = (await res.json()) as FrameConfigResponse;
-      setStates((prev) => ({
-        ...prev,
-        [target]: {
-          ...prev[target],
-          loading: false,
-          loaded: true,
-          imageUrl: data.imageUrl
-            ? `${data.imageUrl}${data.updatedAt ? `?v=${encodeURIComponent(data.updatedAt)}` : ""}`
-            : null,
-          zones: (data.zones ?? []).map((zone) => normalizeZone(zone)),
-          width: data.width ?? null,
-          height: data.height ?? null,
-          dirty: false,
-          error: null,
-          status: null,
-        },
-      }));
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load configuration";
-      setStates((prev) => ({
-        ...prev,
-        [target]: {
-          ...prev[target],
-          loading: false,
-          loaded: true,
-          error: message,
-        },
-      }));
-    }
-  }, []);
+    },
+    [t],
+  );
 
   useEffect(() => {
     if (!state.loaded && !state.loading) {
@@ -309,7 +314,10 @@ export default function FrameSettingsPage() {
         });
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}));
-          throw new Error(payload?.error || `Upload failed (${res.status})`);
+          throw new Error(
+            payload?.error ||
+              t("errors.uploadFailedStatus", { status: res.status }),
+          );
         }
         const data = (await res.json()) as FrameConfigResponse;
         setStates((prev) => ({
@@ -326,11 +334,12 @@ export default function FrameSettingsPage() {
             height: data.height ?? null,
             dirty: false,
             error: null,
-            status: "Frame uploaded",
+            status: t("status.uploaded"),
           },
         }));
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Upload failed";
+        const message =
+          err instanceof Error ? err.message : t("errors.uploadFailed");
         updateState((current) => ({
           ...current,
           saving: false,
@@ -340,7 +349,7 @@ export default function FrameSettingsPage() {
         input.value = "";
       }
     },
-    [mode, state.zones, updateState],
+    [mode, state.zones, t, updateState],
   );
 
   const handleSaveZones = useCallback(async () => {
@@ -359,7 +368,10 @@ export default function FrameSettingsPage() {
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
-        throw new Error(payload?.error || `Save failed (${res.status})`);
+        throw new Error(
+          payload?.error ||
+            t("errors.saveFailedStatus", { status: res.status }),
+        );
       }
       const data = (await res.json()) as FrameConfigResponse;
       setStates((prev) => ({
@@ -375,21 +387,22 @@ export default function FrameSettingsPage() {
           height: data.height ?? prev[mode].height,
           dirty: false,
           error: null,
-          status: "Zones saved",
+          status: t("status.saved"),
         },
       }));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Save failed";
+      const message =
+        err instanceof Error ? err.message : t("errors.saveFailed");
       updateState((current) => ({ ...current, saving: false, error: message }));
     }
-  }, [mode, state.zones, updateState]);
+  }, [mode, state.zones, t, updateState]);
 
   const previewBackground = MODE_BACKGROUND[mode];
 
   return (
     <div className="space-y-6">
       <div className="flex gap-2">
-        {(Object.keys(MODE_LABELS) as FrameMode[]).map((key) => {
+        {(Object.keys(MODE_LABEL_KEYS) as FrameMode[]).map((key) => {
           const isActive = key === mode;
           return (
             <button
@@ -402,7 +415,7 @@ export default function FrameSettingsPage() {
                   : "border-black/10 text-foreground hover:border-foreground/50 dark:border-white/20"
               }`}
             >
-              {MODE_LABELS[key]}
+              {t(MODE_LABEL_KEYS[key])}
             </button>
           );
         })}
@@ -416,7 +429,7 @@ export default function FrameSettingsPage() {
                 htmlFor={fileInputId}
                 className="block text-xs font-medium uppercase tracking-wide text-muted-foreground"
               >
-                Frame image
+                {t("frameImage.label")}
               </label>
               <input
                 type="file"
@@ -426,24 +439,23 @@ export default function FrameSettingsPage() {
                 className="mt-1 block w-full text-sm"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Upload a transparent PNG sized exactly how you want the final
-                output.
+                {t("frameImage.helper")}
               </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-medium">Zones</h2>
+                <h2 className="text-sm font-medium">{t("zones.title")}</h2>
                 <button
                   type="button"
                   onClick={handleAddZone}
                   className="text-xs text-foreground underline"
                 >
-                  Add zone
+                  {t("zones.add")}
                 </button>
               </div>
               {state.zones.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  No zones yet. Add one to get started.
+                  {t("zones.empty")}
                 </p>
               )}
               <div className="space-y-3">
@@ -464,19 +476,19 @@ export default function FrameSettingsPage() {
                           className="font-medium"
                           onClick={() => setSelectedZoneId(zone.id)}
                         >
-                          Zone {index + 1}
+                          {t("zones.zoneLabel", { index: index + 1 })}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveZone(zone.id)}
                           className="text-xs text-red-500"
                         >
-                          Remove
+                          {t("zones.remove")}
                         </button>
                       </div>
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <label className="flex flex-col gap-1">
-                          <span>Left (%)</span>
+                          <span>{t("zones.left")}</span>
                           <input
                             type="number"
                             min={0}
@@ -494,7 +506,7 @@ export default function FrameSettingsPage() {
                           />
                         </label>
                         <label className="flex flex-col gap-1">
-                          <span>Top (%)</span>
+                          <span>{t("zones.top")}</span>
                           <input
                             type="number"
                             min={0}
@@ -512,7 +524,7 @@ export default function FrameSettingsPage() {
                           />
                         </label>
                         <label className="flex flex-col gap-1">
-                          <span>Width (%)</span>
+                          <span>{t("zones.width")}</span>
                           <input
                             type="number"
                             min={0}
@@ -530,7 +542,7 @@ export default function FrameSettingsPage() {
                           />
                         </label>
                         <label className="flex flex-col gap-1">
-                          <span>Height (%)</span>
+                          <span>{t("zones.height")}</span>
                           <input
                             type="number"
                             min={0}
@@ -557,7 +569,7 @@ export default function FrameSettingsPage() {
                 onClick={handleResetZones}
                 className="text-xs text-muted-foreground underline"
               >
-                Reset zones to default layout
+                {t("zones.reset")}
               </button>
             </div>
           </div>
@@ -571,7 +583,7 @@ export default function FrameSettingsPage() {
                 >
                   <Image
                     src={state.imageUrl}
-                    alt="Frame preview"
+                    alt={t("preview.alt")}
                     width={state.width ?? 1200}
                     height={state.height ?? 1200}
                     className="h-auto w-full"
@@ -601,14 +613,13 @@ export default function FrameSettingsPage() {
                 </div>
               ) : (
                 <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                  Upload a frame PNG to configure zones.
+                  {t("preview.empty")}
                 </div>
               )}
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Zones are applied in order. Zone 1 receives the first photo, zone
-              2 the next, and so on.
+              {t("preview.orderHint")}
             </p>
           </div>
         </div>
@@ -621,7 +632,7 @@ export default function FrameSettingsPage() {
           disabled={state.saving || !state.dirty}
           className="rounded-md bg-foreground px-4 py-2 text-sm text-background disabled:opacity-60"
         >
-          {state.saving ? "Saving…" : "Save zones"}
+          {state.saving ? t("actions.saving") : t("actions.save")}
         </button>
         {state.status && (
           <span className="text-xs text-emerald-600">{state.status}</span>

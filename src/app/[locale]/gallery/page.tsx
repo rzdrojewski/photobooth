@@ -1,21 +1,24 @@
 import Image from "next/image";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+
+import { Link } from "@/i18n/routing";
 import { listPhotos } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
 
 export default async function GalleryPage() {
+  const t = await getTranslations("gallery");
   const photos = listPhotos();
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto flex items-baseline justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Gallery</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <Link className="underline" href="/">
-          Back to booth
+          {t("backToBooth")}
         </Link>
       </div>
       {photos.length === 0 ? (
-        <p className="text-center text-sm opacity-80">No photos yet.</p>
+        <p className="text-center text-sm opacity-80">{t("empty")}</p>
       ) : (
         <ul
           className="grid gap-4"

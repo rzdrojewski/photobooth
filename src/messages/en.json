@@ -1,0 +1,148 @@
+{
+  "metadata": {
+    "title": "Zdro Photobooth",
+    "description": "Photobooth capture experience"
+  },
+  "common": {
+    "eventTitleDefault": "Zdro Photobooth",
+    "none": "(none)",
+    "language": "Language"
+  },
+  "home": {
+    "actions": {
+      "capturingSingle": "Capturing…",
+      "takeSingle": "Take Photo",
+      "capturingBurst": "Capturing strip…",
+      "takeBurst": "Take Photo Strip",
+      "detecting": "Detecting…",
+      "detectCamera": "Detect Camera"
+    },
+    "debug": {
+      "title": "Camera Info",
+      "ports": "Ports",
+      "selectedPort": "Selected Port",
+      "autoDetectOutput": "Auto-detect Output",
+      "summary": "Summary"
+    },
+    "errors": {
+      "captureFailed": "Capture failed. Please check the camera and try again.",
+      "unexpected": "Unexpected error"
+    }
+  },
+  "gallery": {
+    "title": "Gallery",
+    "backToBooth": "Back to booth",
+    "empty": "No photos yet."
+  },
+  "galleryDetail": {
+    "scanToDownload": "Scan to download:",
+    "backToGallery": "Back to gallery"
+  },
+  "captureResult": {
+    "scanToDownload": "Scan to download:",
+    "takeAnother": "Take another photo",
+    "takeStrip": "Take a strip",
+    "viewGallery": "View gallery"
+  },
+  "burstResult": {
+    "scanToDownload": "Scan to download:",
+    "takeAnother": "Take another strip",
+    "takeSingle": "Take single photo",
+    "viewGallery": "View gallery"
+  },
+  "config": {
+    "title": "Camera Settings",
+    "backToBooth": "Back to booth",
+    "tabs": {
+      "event": {
+        "title": "Event title",
+        "description": "Set the headline text shown on the capture screen."
+      },
+      "preview": {
+        "title": "Preview lens",
+        "description": "Select which camera lens powers the live preview before each capture."
+      },
+      "frames": {
+        "title": "Frames",
+        "description": "Upload decorative frames and define the photo drop zones for each capture mode."
+      },
+      "countdown": {
+        "title": "Countdown",
+        "description": "Configure the on-screen countdown and shutter timing cues."
+      },
+      "storage": {
+        "title": "Storage",
+        "description": "Manage how long captures stay on disk and cleanup automation."
+      }
+    }
+  },
+  "configEvent": {
+    "label": "Capture screen title",
+    "helper": "This text appears at the top of the home screen. Leave blank to use the default. Current default: {defaultTitle}.",
+    "save": "Save title",
+    "reset": "Reset to default",
+    "statusSaved": "Saved"
+  },
+  "configPreview": {
+    "errors": {
+      "unsupported": "Camera APIs are not supported in this browser.",
+      "startFailed": "Unable to start the preview for this lens.",
+      "enumerationFailed": "Unable to list cameras. Allow camera access and try again."
+    },
+    "actions": {
+      "refreshing": "Refreshing…",
+      "refresh": "Refresh list"
+    },
+    "empty": "No cameras detected yet.",
+    "cameraFallback": "Camera {id}"
+  },
+  "configFrames": {
+    "modes": {
+      "single": "Single capture",
+      "burst": "Burst capture"
+    },
+    "errors": {
+      "loadFailedStatus": "Failed to load configuration ({status}).",
+      "loadFailed": "Failed to load configuration.",
+      "uploadFailedStatus": "Upload failed ({status}).",
+      "uploadFailed": "Upload failed.",
+      "saveFailedStatus": "Save failed ({status}).",
+      "saveFailed": "Save failed."
+    },
+    "status": {
+      "uploaded": "Frame uploaded",
+      "saved": "Zones saved"
+    },
+    "frameImage": {
+      "label": "Frame image",
+      "helper": "Upload a transparent PNG sized exactly how you want the final output."
+    },
+    "zones": {
+      "title": "Zones",
+      "add": "Add zone",
+      "empty": "No zones yet. Add one to get started.",
+      "zoneLabel": "Zone {index}",
+      "remove": "Remove",
+      "left": "Left (%)",
+      "top": "Top (%)",
+      "width": "Width (%)",
+      "height": "Height (%)",
+      "reset": "Reset zones to default layout"
+    },
+    "preview": {
+      "alt": "Frame preview",
+      "empty": "Upload a frame PNG to configure zones.",
+      "orderHint": "Zones are applied in order. Zone 1 receives the first photo, zone 2 the next, and so on."
+    },
+    "actions": {
+      "saving": "Saving…",
+      "save": "Save zones"
+    }
+  },
+  "configCountdown": {
+    "placeholder": "Countdown controls will let you tweak how long the on-screen timer runs and when the shutter triggers. Stay tuned!"
+  },
+  "configStorage": {
+    "placeholder": "Storage preferences will soon allow you to configure retention policies and bulk cleanups for captured photos."
+  }
+}

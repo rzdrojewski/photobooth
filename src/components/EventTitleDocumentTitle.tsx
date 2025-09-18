@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
 import { useEventTitle } from "@/hooks/useEventTitle";
 
 export function EventTitleDocumentTitle() {
-  const { title, isReady } = useEventTitle();
+  const t = useTranslations("common");
+  const fallbackTitle = t("eventTitleDefault");
+  const { title, isReady } = useEventTitle(fallbackTitle);
   const previousTitleRef = useRef<string | null>(null);
 
   useEffect(() => {

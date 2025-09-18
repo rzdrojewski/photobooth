@@ -88,3 +88,9 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [x] Add config UI to upload PNG frames and edit zone placement per mode.
 - [x] Preserve original single captures under `public/photos/single` while saving framed copies in `public/photos`.
 - [x] Make the home screen event title configurable from the settings area.
+
+## Milestone 7 — Internationalization
+
+- [x] Integrate locale-aware routing and translations with `next-intl`.
+- [x] Extract UI copy into translation catalogs and localize existing screens (English, French).
+- [ ] Add localized content for additional languages beyond English and French.

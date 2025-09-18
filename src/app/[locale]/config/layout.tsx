@@ -1,37 +1,36 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
+
+import { Link } from "@/i18n/routing";
 
 const TABS = [
   {
     href: "/config/event",
-    title: "Event title",
-    description: "Set the headline text shown on the capture screen.",
+    titleKey: "tabs.event.title",
+    descriptionKey: "tabs.event.description",
   },
   {
     href: "/config/preview",
-    title: "Preview lens",
-    description:
-      "Select which camera lens powers the live preview before each capture.",
+    titleKey: "tabs.preview.title",
+    descriptionKey: "tabs.preview.description",
   },
   {
     href: "/config/frames",
-    title: "Frames",
-    description:
-      "Upload decorative frames and define the photo drop zones for each capture mode.",
+    titleKey: "tabs.frames.title",
+    descriptionKey: "tabs.frames.description",
   },
   {
     href: "/config/countdown",
-    title: "Countdown",
-    description: "Configure the on-screen countdown and shutter timing cues.",
+    titleKey: "tabs.countdown.title",
+    descriptionKey: "tabs.countdown.description",
   },
   {
     href: "/config/storage",
-    title: "Storage",
-    description:
-      "Manage how long captures stay on disk and cleanup automation.",
+    titleKey: "tabs.storage.title",
+    descriptionKey: "tabs.storage.description",
   },
 ] as const;
 
@@ -41,6 +40,7 @@ type ConfigLayoutProps = {
 
 export default function ConfigLayout({ children }: ConfigLayoutProps) {
   const pathname = usePathname();
+  const t = useTranslations("config");
   const activeTab =
     TABS.find((tab) => pathname?.startsWith(tab.href)) ?? TABS[0];
 
@@ -48,15 +48,17 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
     <div className="min-h-screen p-8 flex justify-center">
       <main className="w-full max-w-[80%] space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Camera Settings</h1>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
           <Link
             href="/"
             className="rounded-md border border-black/10 px-4 py-2 dark:border-white/20"
           >
-            Back to booth
+            {t("backToBooth")}
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground">{activeTab.description}</p>
+        <p className="text-sm text-muted-foreground">
+          {t(activeTab.descriptionKey)}
+        </p>
         <div className="flex flex-col gap-6 sm:flex-row">
           <aside className="sm:w-60">
             <nav className="flex flex-col gap-2">
@@ -72,7 +74,7 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
                         : "border-black/10 text-foreground hover:border-foreground/50 dark:border-white/20"
                     }`}
                   >
-                    <span className="font-medium">{tab.title}</span>
+                    <span className="font-medium">{t(tab.titleKey)}</span>
                   </Link>
                 );
               })}

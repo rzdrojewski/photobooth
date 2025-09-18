@@ -13,7 +13,9 @@ type UseEventTitleResult = {
   isReady: boolean;
 };
 
-export function useEventTitle(): UseEventTitleResult {
+export function useEventTitle(
+  defaultTitle: string = DEFAULT_EVENT_TITLE,
+): UseEventTitleResult {
   const [rawTitle, setRawTitle] = useState("");
   const [isReady, setIsReady] = useState(false);
 
@@ -48,11 +50,16 @@ export function useEventTitle(): UseEventTitleResult {
     window.localStorage.setItem(STORAGE_KEY, value);
   }, []);
 
-  const title = rawTitle.trim().length > 0 ? rawTitle : DEFAULT_EVENT_TITLE;
+  const fallbackTitle =
+    defaultTitle.trim().length > 0 ? defaultTitle : DEFAULT_EVENT_TITLE;
+  const title = rawTitle.trim().length > 0 ? rawTitle : fallbackTitle;
 
   return { title, rawTitle, setTitle, isReady };
 }
 
-export function getDefaultEventTitle(): string {
+export function getDefaultEventTitle(fallbackTitle?: string): string {
+  if (fallbackTitle && fallbackTitle.trim().length > 0) {
+    return fallbackTitle;
+  }
   return DEFAULT_EVENT_TITLE;
 }

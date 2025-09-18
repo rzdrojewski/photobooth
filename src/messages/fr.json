@@ -1,0 +1,148 @@
+{
+  "metadata": {
+    "title": "Cabine photo Zdro",
+    "description": "Expérience de capture photobooth"
+  },
+  "common": {
+    "eventTitleDefault": "Cabine photo Zdro",
+    "none": "(aucun)",
+    "language": "Langue"
+  },
+  "home": {
+    "actions": {
+      "capturingSingle": "Capture en cours…",
+      "takeSingle": "Prendre une photo",
+      "capturingBurst": "Capture de la bande…",
+      "takeBurst": "Prendre une bande photo",
+      "detecting": "Détection…",
+      "detectCamera": "Détecter la caméra"
+    },
+    "debug": {
+      "title": "Informations caméra",
+      "ports": "Ports",
+      "selectedPort": "Port sélectionné",
+      "autoDetectOutput": "Résultat de l’auto-détection",
+      "summary": "Résumé"
+    },
+    "errors": {
+      "captureFailed": "La capture a échoué. Vérifiez la caméra puis réessayez.",
+      "unexpected": "Erreur inattendue"
+    }
+  },
+  "gallery": {
+    "title": "Galerie",
+    "backToBooth": "Retour à la cabine",
+    "empty": "Aucune photo pour le moment."
+  },
+  "galleryDetail": {
+    "scanToDownload": "Scannez pour télécharger :",
+    "backToGallery": "Retour à la galerie"
+  },
+  "captureResult": {
+    "scanToDownload": "Scannez pour télécharger :",
+    "takeAnother": "Prendre une autre photo",
+    "takeStrip": "Prendre une bande photo",
+    "viewGallery": "Voir la galerie"
+  },
+  "burstResult": {
+    "scanToDownload": "Scannez pour télécharger :",
+    "takeAnother": "Prendre une autre bande",
+    "takeSingle": "Prendre une photo",
+    "viewGallery": "Voir la galerie"
+  },
+  "config": {
+    "title": "Paramètres caméra",
+    "backToBooth": "Retour à la cabine",
+    "tabs": {
+      "event": {
+        "title": "Titre de l’événement",
+        "description": "Définissez le texte principal affiché sur l’écran de capture."
+      },
+      "preview": {
+        "title": "Objectif d’aperçu",
+        "description": "Choisissez l’objectif utilisé pour l’aperçu en direct avant chaque capture."
+      },
+      "frames": {
+        "title": "Cadres",
+        "description": "Téléversez des cadres décoratifs et définissez les zones de chute pour chaque mode de capture."
+      },
+      "countdown": {
+        "title": "Compte à rebours",
+        "description": "Réglez la durée du compte à rebours à l’écran et le déclenchement."
+      },
+      "storage": {
+        "title": "Stockage",
+        "description": "Gérez la durée de conservation des captures et l’automatisation du nettoyage."
+      }
+    }
+  },
+  "configEvent": {
+    "label": "Titre de l’écran de capture",
+    "helper": "Ce texte apparaît en haut de l’écran d’accueil. Laissez vide pour utiliser la valeur par défaut. Valeur actuelle : {defaultTitle}.",
+    "save": "Enregistrer le titre",
+    "reset": "Réinitialiser",
+    "statusSaved": "Enregistré"
+  },
+  "configPreview": {
+    "errors": {
+      "unsupported": "Les API caméra ne sont pas prises en charge par ce navigateur.",
+      "startFailed": "Impossible de démarrer l’aperçu pour cet objectif.",
+      "enumerationFailed": "Impossible de récupérer la liste des caméras. Autorisez l’accès à la caméra puis réessayez."
+    },
+    "actions": {
+      "refreshing": "Actualisation…",
+      "refresh": "Actualiser la liste"
+    },
+    "empty": "Aucune caméra détectée pour le moment.",
+    "cameraFallback": "Caméra {id}"
+  },
+  "configFrames": {
+    "modes": {
+      "single": "Capture unique",
+      "burst": "Capture en rafale"
+    },
+    "errors": {
+      "loadFailedStatus": "Échec du chargement de la configuration ({status}).",
+      "loadFailed": "Échec du chargement de la configuration.",
+      "uploadFailedStatus": "Échec de l’envoi ({status}).",
+      "uploadFailed": "Échec de l’envoi.",
+      "saveFailedStatus": "Échec de l’enregistrement ({status}).",
+      "saveFailed": "Échec de l’enregistrement."
+    },
+    "status": {
+      "uploaded": "Cadre téléversé",
+      "saved": "Zones enregistrées"
+    },
+    "frameImage": {
+      "label": "Image du cadre",
+      "helper": "Téléversez un PNG transparent déjà aux dimensions finales souhaitées."
+    },
+    "zones": {
+      "title": "Zones",
+      "add": "Ajouter une zone",
+      "empty": "Aucune zone définie. Ajoutez-en une pour commencer.",
+      "zoneLabel": "Zone {index}",
+      "remove": "Supprimer",
+      "left": "Gauche (%)",
+      "top": "Haut (%)",
+      "width": "Largeur (%)",
+      "height": "Hauteur (%)",
+      "reset": "Réinitialiser les zones par défaut"
+    },
+    "preview": {
+      "alt": "Aperçu du cadre",
+      "empty": "Téléversez un PNG de cadre pour configurer les zones.",
+      "orderHint": "Les zones sont appliquées dans l’ordre. La zone 1 reçoit la première photo, la zone 2 la suivante, etc."
+    },
+    "actions": {
+      "saving": "Enregistrement…",
+      "save": "Enregistrer les zones"
+    }
+  },
+  "configCountdown": {
+    "placeholder": "Les commandes de compte à rebours vous permettront bientôt de régler la durée de l’horloge à l’écran et le déclenchement. Restez à l’écoute !"
+  },
+  "configStorage": {
+    "placeholder": "Les préférences de stockage vous permettront bientôt de configurer la rétention et les nettoyages groupés des photos capturées."
+  }
+}
