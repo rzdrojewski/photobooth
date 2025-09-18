@@ -368,84 +368,96 @@ export default function Home() {
   }, [onBurstCapture, onCapture, router, searchParams]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-8">
-      <div className="flex w-full max-w-3xl flex-1 flex-col items-center gap-10">
-        <header className="w-full pt-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            {title}
-          </h1>
-        </header>
-        <main className="flex w-full flex-1 flex-col items-center justify-end gap-6 mb-16">
-          {!isCountingDown && (
-            <div className="flex w-full flex-col items-stretch gap-4 sm:flex-row sm:justify-center">
-              <button
-                type="button"
-                onClick={onCapture}
-                disabled={isCapturing}
-                className="flex-1 rounded-2xl bg-foreground px-10 py-6 text-xl font-semibold text-background transition disabled:opacity-60 sm:text-2xl"
-              >
-                {isCapturing && activeCapture === "single"
-                  ? "Capturing…"
-                  : "Take Photo"}
-              </button>
-              <button
-                type="button"
-                onClick={onBurstCapture}
-                disabled={isCapturing}
-                className="flex-1 rounded-2xl border border-black/10 px-10 py-6 text-xl font-semibold transition disabled:opacity-60 dark:border-white/20 sm:text-2xl"
-              >
-                {isCapturing && activeCapture === "burst"
-                  ? "Capturing strip…"
-                  : "Take Photo Strip"}
-              </button>
-              {isDebug && (
+    <div
+      className="relative min-h-screen w-full bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url(/wallpaper/wallpaper.png)" }}
+    >
+      <div className="absolute inset-0 bg-black/45" />
+      <div className="relative z-10 flex min-h-screen flex-col items-center p-8">
+        <div className="flex w-full max-w-3xl flex-1 flex-col items-center gap-10">
+          <header className="w-full pt-8 text-center text-white drop-shadow-lg">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+              {title}
+            </h1>
+          </header>
+          <main className="mb-16 flex w-full flex-1 flex-col items-center justify-end gap-6 text-white">
+            {!isCountingDown && (
+              <div className="flex w-full flex-col items-stretch gap-4 sm:flex-row sm:justify-center">
                 <button
                   type="button"
-                  onClick={onDetect}
-                  disabled={isDetecting || isCapturing}
-                  className="flex-1 rounded-2xl border border-black/10 px-10 py-6 text-lg font-medium transition disabled:opacity-60 dark:border-white/20"
+                  onClick={onCapture}
+                  disabled={isCapturing}
+                  className="flex-1 rounded-2xl bg-foreground px-10 py-6 text-xl font-semibold text-background transition disabled:opacity-60 sm:text-2xl"
                 >
-                  {isDetecting ? "Detecting…" : "Detect Camera"}
+                  {isCapturing && activeCapture === "single"
+                    ? "Capturing…"
+                    : "Take Photo"}
                 </button>
-              )}
-            </div>
-          )}
-
-          {error && (
-            <p className="max-w-prose text-center text-sm text-red-600">
-              {error}
-            </p>
-          )}
-
-          {isDebug && cameraInfo && (
-            <div className="w-full max-w-xl">
-              <h2 className="mb-2 text-lg font-medium">Camera Info</h2>
-              <div className="mb-2 text-sm">
-                <div>
-                  Ports:{" "}
-                  {cameraInfo.ports?.length
-                    ? cameraInfo.ports.join(", ")
-                    : "(none)"}
-                </div>
-                <div>Selected Port: {cameraInfo.selectedPort ?? "(none)"}</div>
+                <button
+                  type="button"
+                  onClick={onBurstCapture}
+                  disabled={isCapturing}
+                  className="flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-xl font-semibold text-white transition disabled:opacity-60 sm:text-2xl"
+                >
+                  {isCapturing && activeCapture === "burst"
+                    ? "Capturing strip…"
+                    : "Take Photo Strip"}
+                </button>
+                {isDebug && (
+                  <button
+                    type="button"
+                    onClick={onDetect}
+                    disabled={isDetecting || isCapturing}
+                    className="flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-lg font-medium text-white transition disabled:opacity-60"
+                  >
+                    {isDetecting ? "Detecting…" : "Detect Camera"}
+                  </button>
+                )}
               </div>
-              <details className="mb-2">
-                <summary className="cursor-pointer">Auto-detect Output</summary>
-                <pre className="max-h-64 whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5 overflow-auto">
-                  {cameraInfo.autoDetectRaw}
-                </pre>
-              </details>
-              {cameraInfo.summaryRaw && (
-                <details>
-                  <summary className="cursor-pointer">Summary</summary>
-                  <pre className="max-h-64 whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5 overflow-auto">
-                    {cameraInfo.summaryRaw}
+            )}
+
+            {error && (
+              <p className="max-w-prose text-center text-sm text-red-200">
+                {error}
+              </p>
+            )}
+
+            {isDebug && cameraInfo && (
+              <div className="w-full max-w-xl rounded-xl border border-white/20 bg-black/40 p-4 shadow-lg backdrop-blur">
+                <h2 className="mb-2 text-lg font-medium text-white">
+                  Camera Info
+                </h2>
+                <div className="mb-2 text-sm text-white">
+                  <div>
+                    Ports:{" "}
+                    {cameraInfo.ports?.length
+                      ? cameraInfo.ports.join(", ")
+                      : "(none)"}
+                  </div>
+                  <div>
+                    Selected Port: {cameraInfo.selectedPort ?? "(none)"}
+                  </div>
+                </div>
+                <details className="mb-2 text-white">
+                  <summary className="cursor-pointer">
+                    Auto-detect Output
+                  </summary>
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-black/60 p-2 text-xs text-white">
+                    {cameraInfo.autoDetectRaw}
                   </pre>
                 </details>
-              )}
-            </div>
-          )}
-        </main>
+                {cameraInfo.summaryRaw && (
+                  <details className="text-white">
+                    <summary className="cursor-pointer">Summary</summary>
+                    <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-black/60 p-2 text-xs text-white">
+                      {cameraInfo.summaryRaw}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            )}
+          </main>
+        </div>
       </div>
       {(showPreview || isCountingDown) && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
@@ -459,7 +471,7 @@ export default function Home() {
             />
           )}
           {isCountingDown && (
-            <div className="absolute text-[20vmin] font-bold opacity-70 select-none">
+            <div className="absolute select-none text-[20vmin] font-bold text-white opacity-70">
               {count}
             </div>
           )}

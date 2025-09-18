@@ -33,6 +33,8 @@ export default async function GalleryPage() {
                   src={p.url}
                   alt={p.filename}
                   loading="lazy"
+                  width={160}
+                  height={160}
                   className="w-full aspect-square object-cover rounded border border-black/10 dark:border-white/15 group-hover:opacity-90"
                 />
                 <div className="mt-1 text-xs opacity-70 truncate">
