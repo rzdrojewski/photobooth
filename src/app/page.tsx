@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const BURST_FRAME_COUNT = 4;
+export const BURST_FRAME_COUNT = 3;
 const PREVIEW_DEVICE_STORAGE_KEY = "photobooth.previewDeviceId";
 
 export default function Home() {
