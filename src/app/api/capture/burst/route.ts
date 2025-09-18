@@ -12,7 +12,7 @@ import { composeFrame } from "@/lib/frame";
 import { makeId } from "@/lib/id";
 import { createMosaic } from "@/lib/mosaic";
 
-const FRAME_COUNT = 3
+const FRAME_COUNT = 3;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

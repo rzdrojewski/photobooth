@@ -10,7 +10,9 @@ const MOSAIC_BACKGROUND = { r: 0, g: 0, b: 0 };
 
 export async function createMosaic(framePaths: string[], outputPath: string) {
   if (framePaths.length !== MOSAIC_COLUMNS * MOSAIC_ROWS) {
-    throw new Error(`Expected ${MOSAIC_COLUMNS * MOSAIC_ROWS} frames, received ${framePaths.length}`);
+    throw new Error(
+      `Expected ${MOSAIC_COLUMNS * MOSAIC_ROWS} frames, received ${framePaths.length}`,
+    );
   }
 
   ensureDir(dirname(outputPath));
@@ -32,7 +34,10 @@ export async function createMosaic(framePaths: string[], outputPath: string) {
   const composites = await Promise.all(
     metadatas.map(async (meta, idx) => {
       const buffer = await sharp(meta.path)
-        .resize(cellWidth, cellHeight, { fit: "contain", background: MOSAIC_BACKGROUND })
+        .resize(cellWidth, cellHeight, {
+          fit: "contain",
+          background: MOSAIC_BACKGROUND,
+        })
         .toBuffer();
       const col = idx % MOSAIC_COLUMNS;
       const row = Math.floor(idx / MOSAIC_COLUMNS);
@@ -56,4 +61,3 @@ export async function createMosaic(framePaths: string[], outputPath: string) {
     .jpeg({ quality: 90 })
     .toFile(outputPath);
 }
-

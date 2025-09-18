@@ -39,8 +39,6 @@ function runGphoto(
           const wrapped = new Error(
             `gphoto2 failed: ${err.message}\nargs: ${args.join(" ")}\nstdout:\n${out}\nstderr:\n${errOut}`,
           );
-          // @ts-ignore attach context for server logs
-          (wrapped as any).code = (err as any).code;
           return reject(wrapped);
         }
         resolve({ stdout: out, stderr: errOut });
@@ -50,7 +48,10 @@ function runGphoto(
   });
 }
 
-async function detectPort(bin: string, timeout: number): Promise<string | null> {
+async function detectPort(
+  bin: string,
+  timeout: number,
+): Promise<string | null> {
   try {
     const { stdout } = await runGphoto(bin, ["--auto-detect"], timeout);
     const match = stdout.match(/usb:\d+,\d+/);
@@ -60,16 +61,26 @@ async function detectPort(bin: string, timeout: number): Promise<string | null> 
   }
 }
 
-export async function getCameraInfo(bin?: string, port?: string | null, timeoutMs?: number) {
+export async function getCameraInfo(
+  bin?: string,
+  port?: string | null,
+  timeoutMs?: number,
+) {
   const timeout = timeoutMs ?? 15000;
   const exe = bin || process.env.GPHOTO2_BIN || "gphoto2";
   const auto = await runGphoto(exe, ["--auto-detect"], timeout);
-  const ports = Array.from(auto.stdout.matchAll(/usb:\d+,\d+/g)).map((m) => m[0]);
+  const ports = Array.from(auto.stdout.matchAll(/usb:\d+,\d+/g)).map(
+    (m) => m[0],
+  );
   const selected = port || process.env.GPHOTO2_PORT || ports[0] || null;
   let summary: string | null = null;
   try {
     if (selected) {
-      const res = await runGphoto(exe, ["--port", selected, "--summary"], timeout);
+      const res = await runGphoto(
+        exe,
+        ["--port", selected, "--summary"],
+        timeout,
+      );
       summary = res.stdout || res.stderr || null;
     }
   } catch (e) {
@@ -88,7 +99,11 @@ async function listFileIndices(
   baseArgs: string[],
   timeout: number,
 ): Promise<number[]> {
-  const { stdout } = await runGphoto(bin, [...baseArgs, "--list-files"], timeout);
+  const { stdout } = await runGphoto(
+    bin,
+    [...baseArgs, "--list-files"],
+    timeout,
+  );
   return Array.from(stdout.matchAll(/^#\s*(\d+)/gm))
     .map((m) => Number(m[1]))
     .filter((n) => Number.isFinite(n));
@@ -125,7 +140,15 @@ export async function capturePhoto(
   // 4) Download the last file to the desired location
   await runGphoto(
     bin,
-    [...baseArgs, "--get-file", String(lastIndex), "--filename", outputFile, "--force-overwrite", "--quiet"],
+    [
+      ...baseArgs,
+      "--get-file",
+      String(lastIndex),
+      "--filename",
+      outputFile,
+      "--force-overwrite",
+      "--quiet",
+    ],
     timeout,
   );
 }
@@ -217,11 +240,20 @@ export async function downloadFramesRange(
     // ignore
   }
 
-  console.log(`running command : ${[bin, ...baseArgs, `--get-file=${rangeSpec}`, "--filename", join(destinationDir, "frame-%n.%C"), "--force-overwrite", "--quiet"].join(" ")}`);
+  console.log(
+    `running command : ${[bin, ...baseArgs, `--get-file=${rangeSpec}`, "--filename", join(destinationDir, "frame-%n.%C"), "--force-overwrite", "--quiet"].join(" ")}`,
+  );
 
   await runGphoto(
     bin,
-    [...baseArgs, `--get-file=${rangeSpec}`, "--filename", join(destinationDir, "frame-%n.%C"), "--force-overwrite", "--quiet"],
+    [
+      ...baseArgs,
+      `--get-file=${rangeSpec}`,
+      "--filename",
+      join(destinationDir, "frame-%n.%C"),
+      "--force-overwrite",
+      "--quiet",
+    ],
     timeout,
   );
 
@@ -229,7 +261,7 @@ export async function downloadFramesRange(
   const newFiles = afterFiles.filter((file) => !beforeFiles.has(file));
 
   const results: string[] = [];
-  for (let i = 0; i < sorted.length ; i += 1) {
+  for (let i = 0; i < sorted.length; i += 1) {
     const index = i + 1;
     console.log(`[downloadFramesRange] looking for frame-${index}`);
     const match = newFiles.find((file) => file.startsWith(`frame-${index}`));

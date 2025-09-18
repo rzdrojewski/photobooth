@@ -27,7 +27,10 @@ export default async function PhotoDetailPage({ params }: Props) {
           <p className="text-sm text-center">Scan to download:</p>
           <QrImage value={photo.url} size={240} />
         </div>
-        <Link href="/gallery" className="rounded-md bg-foreground px-4 py-2 text-center text-background">
+        <Link
+          href="/gallery"
+          className="rounded-md bg-foreground px-4 py-2 text-center text-background"
+        >
           Back to gallery
         </Link>
       </div>

@@ -13,4 +13,3 @@ export async function enqueueCapture<T>(fn: () => Promise<T>): Promise<T> {
     release();
   }
 }
-

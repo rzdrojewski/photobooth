@@ -1,5 +1,5 @@
-import { readdirSync, statSync } from "node:fs";
-import { extname, join, relative, sep, basename } from "node:path";
+import { readdirSync, type Stats, statSync } from "node:fs";
+import { basename, extname, join, relative, sep } from "node:path";
 
 const ALLOWED_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 
@@ -21,12 +21,12 @@ function getDirs() {
 
 export function listPhotos(): PhotoEntry[] {
   const { absDir, publicRoot } = getDirs();
-  let entries: PhotoEntry[] = [];
+  const entries: PhotoEntry[] = [];
   try {
     const files = readdirSync(absDir);
     for (const file of files) {
       const p = join(absDir, file);
-      let st;
+      let st: Stats;
       try {
         st = statSync(p);
       } catch {
@@ -37,9 +37,15 @@ export function listPhotos(): PhotoEntry[] {
       if (!ALLOWED_EXTS.has(ext)) continue;
       const relToPublic = relative(publicRoot, p);
       if (relToPublic.startsWith("..")) continue; // only serve if under public/
-      const url = "/" + relToPublic.split(sep).join("/");
+      const url = `/${relToPublic.split(sep).join("/")}`;
       const id = basename(file, ext);
-      entries.push({ id, filename: file, url, mtimeMs: st.mtimeMs, size: st.size });
+      entries.push({
+        id,
+        filename: file,
+        url,
+        mtimeMs: st.mtimeMs,
+        size: st.size,
+      });
     }
   } catch {
     // ignore
@@ -59,7 +65,7 @@ export function getPhotoById(id: string): PhotoEntry | null {
       if (!st.isFile()) continue;
       const relToPublic = relative(publicRoot, p);
       if (relToPublic.startsWith("..")) return null;
-      const url = "/" + relToPublic.split(sep).join("/");
+      const url = `/${relToPublic.split(sep).join("/")}`;
       return { id, filename: file, url, mtimeMs: st.mtimeMs, size: st.size };
     } catch {
       // try next ext
@@ -67,4 +73,3 @@ export function getPhotoById(id: string): PhotoEntry | null {
   }
   return null;
 }
-

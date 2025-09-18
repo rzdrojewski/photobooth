@@ -1,15 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useEventTitle } from "@/hooks/useEventTitle";
 
 export const BURST_FRAME_COUNT = 3;
 const PREVIEW_DEVICE_STORAGE_KEY = "photobooth.previewDeviceId";
 
 export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
-  const [activeCapture, setActiveCapture] = useState<"single" | "burst" | null>(null);
+  const [activeCapture, setActiveCapture] = useState<"single" | "burst" | null>(
+    null,
+  );
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -24,7 +27,9 @@ export default function Home() {
     (process.env.NEXT_PUBLIC_DEBUG_PHOTOBOOTH ?? "") === "1" ||
     (process.env.NEXT_PUBLIC_DEBUG_PHOTOBOOTH ?? "").toLowerCase() === "true";
 
-  const countdownSeconds = Number(process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 3);
+  const countdownSeconds = Number(
+    process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 3,
+  );
   const [count, setCount] = useState<number>(countdownSeconds);
 
   const router = useRouter();
@@ -34,7 +39,8 @@ export default function Home() {
   const previewStreamRef = useRef<MediaStream | null>(null);
   const preferredDeviceIdRef = useRef<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [preferredDeviceId, setPreferredDeviceId] = useState<string | null>(null);
+  const [, setPreferredDeviceId] = useState<string | null>(null);
+  const { title } = useEventTitle();
 
   const attachPreviewStream = useCallback(() => {
     if (previewVideoRef.current && previewStreamRef.current) {
@@ -55,7 +61,11 @@ export default function Home() {
       attachPreviewStream();
       return;
     }
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    )
+      return;
     try {
       const storedDeviceId =
         typeof window !== "undefined"
@@ -78,7 +88,10 @@ export default function Home() {
           attachPreviewStream();
           return;
         } catch (storedErr) {
-          console.warn("Stored preview device unavailable, falling back", storedErr);
+          console.warn(
+            "Stored preview device unavailable, falling back",
+            storedErr,
+          );
         }
       }
 
@@ -92,14 +105,18 @@ export default function Home() {
       let finalStream = initialStream;
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoInputs = devices.filter((device) => device.kind === "videoinput");
+        const videoInputs = devices.filter(
+          (device) => device.kind === "videoinput",
+        );
         const currentTrack = initialStream.getVideoTracks()[0];
         const currentDeviceId = currentTrack?.getSettings().deviceId;
         const frontCandidates = videoInputs.filter((device) =>
           /front|user/i.test(device.label || ""),
         );
         const preferredDevice = frontCandidates.find(
-          (device) => device.deviceId !== currentDeviceId && !/ultra\s*wide/i.test(device.label || ""),
+          (device) =>
+            device.deviceId !== currentDeviceId &&
+            !/ultra\s*wide/i.test(device.label || ""),
         );
         if (preferredDevice) {
           const replacement = await navigator.mediaDevices.getUserMedia({
@@ -108,25 +125,37 @@ export default function Home() {
               deviceId: { exact: preferredDevice.deviceId },
             },
           });
-          initialStream.getTracks().forEach((track) => track.stop());
+          initialStream.getTracks().forEach((track) => {
+            track.stop();
+          });
           finalStream = replacement;
           preferredDeviceIdRef.current = preferredDevice.deviceId;
           setPreferredDeviceId(preferredDevice.deviceId);
           if (typeof window !== "undefined") {
-            window.localStorage.setItem(PREVIEW_DEVICE_STORAGE_KEY, preferredDevice.deviceId);
+            window.localStorage.setItem(
+              PREVIEW_DEVICE_STORAGE_KEY,
+              preferredDevice.deviceId,
+            );
           }
         }
       } catch (enumerateError) {
-        console.warn("Preview device selection failed, falling back to default", enumerateError);
+        console.warn(
+          "Preview device selection failed, falling back to default",
+          enumerateError,
+        );
       }
 
       previewStreamRef.current = finalStream;
-      const finalDeviceId = finalStream.getVideoTracks()[0]?.getSettings().deviceId ?? null;
+      const finalDeviceId =
+        finalStream.getVideoTracks()[0]?.getSettings().deviceId ?? null;
       if (finalDeviceId) {
         preferredDeviceIdRef.current = finalDeviceId;
         setPreferredDeviceId(finalDeviceId);
         if (typeof window !== "undefined") {
-          window.localStorage.setItem(PREVIEW_DEVICE_STORAGE_KEY, finalDeviceId);
+          window.localStorage.setItem(
+            PREVIEW_DEVICE_STORAGE_KEY,
+            finalDeviceId,
+          );
         }
       }
       attachPreviewStream();
@@ -169,57 +198,58 @@ export default function Home() {
     }
   }, [showPreview, attachPreviewStream]);
 
-  const runCountdown = useCallback(async (
-    trigger?: () => void | Promise<void>,
-  ) => {
-    if (countdownSeconds <= 0) {
-      setCount(0);
-      setIsCountingDown(false);
-      setShowPreview(false);
-      if (trigger) {
-        await trigger();
+  const runCountdown = useCallback(
+    async (trigger?: () => void | Promise<void>) => {
+      if (countdownSeconds <= 0) {
+        setCount(0);
+        setIsCountingDown(false);
+        setShowPreview(false);
+        if (trigger) {
+          await trigger();
+        }
+        return;
       }
-      return;
-    }
-    await ensurePreviewStream();
-    setShowPreview(true);
-    setIsCountingDown(true);
-    setCount(countdownSeconds);
-    let triggerPromise: Promise<void> | null = null;
-    await new Promise<void>((resolve) => {
-      let remaining = countdownSeconds;
-      setCount(remaining);
-      const timer = setInterval(() => {
-        remaining -= 1;
+      await ensurePreviewStream();
+      setShowPreview(true);
+      setIsCountingDown(true);
+      setCount(countdownSeconds);
+      let triggerPromise: Promise<void> | null = null;
+      await new Promise<void>((resolve) => {
+        let remaining = countdownSeconds;
         setCount(remaining);
-        if (remaining === 1 && trigger && !triggerPromise) {
-          try {
-            const possible = trigger();
-            triggerPromise = Promise.resolve(possible).then(() => {});
-          } catch (err) {
-            triggerPromise = Promise.reject(err);
+        const timer = setInterval(() => {
+          remaining -= 1;
+          setCount(remaining);
+          if (remaining === 1 && trigger && !triggerPromise) {
+            try {
+              const possible = trigger();
+              triggerPromise = Promise.resolve(possible).then(() => {});
+            } catch (err) {
+              triggerPromise = Promise.reject(err);
+            }
           }
+          if (remaining <= 0) {
+            clearInterval(timer);
+            setIsCountingDown(false);
+            setShowPreview(false);
+            resolve();
+          }
+        }, 1000);
+      });
+      if (trigger && !triggerPromise) {
+        try {
+          const possible = trigger();
+          triggerPromise = Promise.resolve(possible).then(() => {});
+        } catch (err) {
+          triggerPromise = Promise.reject(err);
         }
-        if (remaining <= 0) {
-          clearInterval(timer);
-          setIsCountingDown(false);
-          setShowPreview(false);
-          resolve();
-        }
-      }, 1000);
-    });
-    if (trigger && !triggerPromise) {
-      try {
-        const possible = trigger();
-        triggerPromise = Promise.resolve(possible).then(() => {});
-      } catch (err) {
-        triggerPromise = Promise.reject(err);
       }
-    }
-    if (triggerPromise) {
-      await triggerPromise;
-    }
-  }, [countdownSeconds, ensurePreviewStream]);
+      if (triggerPromise) {
+        await triggerPromise;
+      }
+    },
+    [countdownSeconds, ensurePreviewStream],
+  );
 
   const runCaptureFlow = useCallback(
     async (
@@ -291,7 +321,9 @@ export default function Home() {
         });
         if (!assembleRes.ok) {
           const body = await assembleRes.json().catch(() => ({}));
-          throw new Error(body?.error || `Capture failed (${assembleRes.status})`);
+          throw new Error(
+            body?.error || `Capture failed (${assembleRes.status})`,
+          );
         }
         const assembleData = (await assembleRes.json()) as { id?: string };
         if (!assembleData?.id) {
@@ -336,69 +368,85 @@ export default function Home() {
   }, [onBurstCapture, onCapture, router, searchParams]);
 
   return (
-    <div className="min-h-screen grid place-items-center p-8">
-      <main className="flex flex-col items-center gap-6 w-full max-w-xl">
-        {!isCountingDown && (
-          <>
-            <h1 className="text-2xl font-semibold">Zdro Photobooth</h1>
-            <div className="flex flex-col items-center gap-3 sm:flex-row">
+    <div className="min-h-screen flex flex-col items-center p-8">
+      <div className="flex w-full max-w-3xl flex-1 flex-col items-center gap-10">
+        <header className="w-full pt-8 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            {title}
+          </h1>
+        </header>
+        <main className="flex w-full flex-1 flex-col items-center gap-6">
+          {!isCountingDown && (
+            <div className="flex w-full flex-col items-stretch gap-4 sm:flex-row sm:justify-center">
               <button
+                type="button"
                 onClick={onCapture}
                 disabled={isCapturing}
-                className="px-6 py-3 rounded-md bg-foreground text-background disabled:opacity-60"
+                className="flex-1 rounded-2xl bg-foreground px-10 py-6 text-xl font-semibold text-background transition disabled:opacity-60 sm:text-2xl"
               >
-                {isCapturing && activeCapture === "single" ? "Capturing…" : "Take Photo"}
+                {isCapturing && activeCapture === "single"
+                  ? "Capturing…"
+                  : "Take Photo"}
               </button>
               <button
+                type="button"
                 onClick={onBurstCapture}
                 disabled={isCapturing}
-                className="px-6 py-3 rounded-md border border-black/10 dark:border-white/20 disabled:opacity-60"
+                className="flex-1 rounded-2xl border border-black/10 px-10 py-6 text-xl font-semibold transition disabled:opacity-60 dark:border-white/20 sm:text-2xl"
               >
-                {isCapturing && activeCapture === "burst" ? "Capturing strip…" : "Take Photo Strip"}
+                {isCapturing && activeCapture === "burst"
+                  ? "Capturing strip…"
+                  : "Take Photo Strip"}
               </button>
               {isDebug && (
                 <button
+                  type="button"
                   onClick={onDetect}
                   disabled={isDetecting || isCapturing}
-                  className="px-6 py-3 rounded-md border border-black/10 dark:border-white/20 disabled:opacity-60"
+                  className="flex-1 rounded-2xl border border-black/10 px-10 py-6 text-lg font-medium transition disabled:opacity-60 dark:border-white/20"
                 >
                   {isDetecting ? "Detecting…" : "Detect Camera"}
                 </button>
               )}
-              <Link
-                href="/config"
-                className="px-6 py-3 rounded-md border border-black/10 dark:border-white/20"
-              >
-                Camera settings
-              </Link>
             </div>
-          </>
-        )}
+          )}
 
-        {error && (
-          <p className="text-red-600 text-sm text-center max-w-prose">{error}</p>
-        )}
+          {error && (
+            <p className="max-w-prose text-center text-sm text-red-600">
+              {error}
+            </p>
+          )}
 
-        {isDebug && cameraInfo && (
-          <div className="w-full max-w-xl">
-            <h2 className="text-lg font-medium mb-2">Camera Info</h2>
-            <div className="text-sm mb-2">
-              <div>Ports: {cameraInfo.ports?.length ? cameraInfo.ports.join(", ") : "(none)"}</div>
-              <div>Selected Port: {cameraInfo.selectedPort ?? "(none)"}</div>
-            </div>
-            <details className="mb-2">
-              <summary className="cursor-pointer">Auto-detect Output</summary>
-              <pre className="text-xs whitespace-pre-wrap p-2 rounded bg-black/5 dark:bg-white/5 overflow-auto max-h-64">{cameraInfo.autoDetectRaw}</pre>
-            </details>
-            {cameraInfo.summaryRaw && (
-              <details>
-                <summary className="cursor-pointer">Summary</summary>
-                <pre className="text-xs whitespace-pre-wrap p-2 rounded bg-black/5 dark:bg-white/5 overflow-auto max-h-64">{cameraInfo.summaryRaw}</pre>
+          {isDebug && cameraInfo && (
+            <div className="w-full max-w-xl">
+              <h2 className="mb-2 text-lg font-medium">Camera Info</h2>
+              <div className="mb-2 text-sm">
+                <div>
+                  Ports:{" "}
+                  {cameraInfo.ports?.length
+                    ? cameraInfo.ports.join(", ")
+                    : "(none)"}
+                </div>
+                <div>Selected Port: {cameraInfo.selectedPort ?? "(none)"}</div>
+              </div>
+              <details className="mb-2">
+                <summary className="cursor-pointer">Auto-detect Output</summary>
+                <pre className="max-h-64 whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5 overflow-auto">
+                  {cameraInfo.autoDetectRaw}
+                </pre>
               </details>
-            )}
-          </div>
-        )}
-      </main>
+              {cameraInfo.summaryRaw && (
+                <details>
+                  <summary className="cursor-pointer">Summary</summary>
+                  <pre className="max-h-64 whitespace-pre-wrap rounded bg-black/5 p-2 text-xs dark:bg-white/5 overflow-auto">
+                    {cameraInfo.summaryRaw}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
       {(showPreview || isCountingDown) && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
           {showPreview && (

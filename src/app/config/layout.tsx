@@ -6,6 +6,11 @@ import type { ReactNode } from "react";
 
 const TABS = [
   {
+    href: "/config/event",
+    title: "Event title",
+    description: "Set the headline text shown on the capture screen.",
+  },
+  {
     href: "/config/preview",
     title: "Preview lens",
     description:

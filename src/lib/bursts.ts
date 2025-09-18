@@ -28,15 +28,17 @@ function resolvePaths() {
 function toUrl(publicRoot: string, filePath: string): string | null {
   const rel = relative(publicRoot, filePath);
   if (rel.startsWith("..")) return null;
-  return "/" + rel.split(sep).join("/");
+  return `/${rel.split(sep).join("/")}`;
 }
 
 export function getBurstById(id: string): BurstEntry | null {
   if (!/^[A-Za-z0-9._-]+$/.test(id)) return null;
   const { publicRoot, photoDir, burstDir } = resolvePaths();
 
-  const mosaic = ALLOWED_EXTS
-    .map((ext) => ({ ext, path: join(photoDir, `${id}-mosaic${ext}`) }))
+  const mosaic = ALLOWED_EXTS.map((ext) => ({
+    ext,
+    path: join(photoDir, `${id}-mosaic${ext}`),
+  }))
     .map(({ ext, path }) => {
       try {
         const stats = statSync(path);
@@ -86,7 +88,9 @@ export function getBurstById(id: string): BurstEntry | null {
         }
       })
       .filter((entry): entry is FileInfo => entry !== null)
-      .sort((a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true }));
+      .sort((a, b) =>
+        a.filename.localeCompare(b.filename, undefined, { numeric: true }),
+      );
   } catch {
     frames = [];
   }

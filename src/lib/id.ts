@@ -6,4 +6,3 @@ export function makeId() {
       : Math.random().toString(36).slice(2);
   return `${ts}-${id}`;
 }
-

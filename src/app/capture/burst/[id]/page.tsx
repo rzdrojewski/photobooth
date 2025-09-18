@@ -18,7 +18,7 @@ export default async function BurstResultPage({ params }: Props) {
         {/* biome-ignore lint/performance/noImgElement: Layout relies on object-contain sizing for arbitrary user uploads. */}
         <img
           src={burst.mosaic.url}
-          alt={`Photo strip ${burst.id}`}
+          alt={`Mosaic ${burst.id}`}
           className="max-h-full max-w-full rounded border border-black/10 object-contain dark:border-white/15"
         />
       </div>
@@ -51,4 +51,3 @@ export default async function BurstResultPage({ params }: Props) {
     </div>
   );
 }
-
