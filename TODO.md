@@ -86,3 +86,4 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 
 - [x] Support configurable frames for single and burst captures with drop zones.
 - [x] Add config UI to upload PNG frames and edit zone placement per mode.
+- [x] Preserve original single captures under `public/photos/single` while saving framed copies in `public/photos`.

@@ -1,3 +1,4 @@
+import { copyFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { NextResponse } from "next/server";
 
@@ -16,19 +17,23 @@ export async function POST() {
     const photoDirEnv = process.env.PHOTO_DIR || "public/photos";
     const photosDir = join(process.cwd(), photoDirEnv);
     ensureDir(photosDir);
+    const originalsDir = join(photosDir, "single");
+    ensureDir(originalsDir);
     const filename = `${id}.jpg`;
-    const absolutePath = join(photosDir, filename);
+    const originalPath = join(originalsDir, filename);
+    const framedPath = join(photosDir, filename);
 
     const opts = {
       port: process.env.GPHOTO2_PORT,
       gphoto2Bin: process.env.GPHOTO2_BIN,
     } as const;
     console.log(
-      `[capture] starting: file=${absolutePath} port=${opts.port ?? "<auto>"}`,
+      `[capture] starting: original=${originalPath} framed=${framedPath} port=${opts.port ?? "<auto>"}`,
     );
     const t0 = Date.now();
-    await capturePhoto(absolutePath, opts);
-    const framed = await composeFrame("single", [absolutePath], absolutePath);
+    await capturePhoto(originalPath, opts);
+    await copyFile(originalPath, framedPath);
+    const framed = await composeFrame("single", [originalPath], framedPath);
     if (framed) {
       console.log(`[capture] applied frame overlay for single capture`);
     }
@@ -38,7 +43,7 @@ export async function POST() {
     // Derive a public URL if saved under public/
     const publicRoot = join(process.cwd(), "public");
     let url = `/photos/${filename}`;
-    const relToPublic = relative(publicRoot, absolutePath);
+    const relToPublic = relative(publicRoot, framedPath);
     if (!relToPublic.startsWith("..")) {
       url = `/${relToPublic.split(sep).join("/")}`;
     }
