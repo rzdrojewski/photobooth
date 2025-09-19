@@ -7,12 +7,13 @@ import { getBurstById } from "@/lib/bursts";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ locale: string; id: string }> };
 
 export default async function BurstResultPage({ params }: Props) {
-  const burst = getBurstById(params.id);
+  const { locale, id } = await params;
+  const burst = getBurstById(id);
   if (!burst) return notFound();
-  const t = await getTranslations("burstResult");
+  const t = await getTranslations({ locale, namespace: "burstResult" });
 
   return (
     <div className="grid h-screen grid-cols-5 overflow-hidden">
@@ -31,19 +32,28 @@ export default async function BurstResultPage({ params }: Props) {
         </div>
         <div className="flex w-full flex-col items-stretch gap-2">
           <Link
-            href="/?autoCapture=burst"
+            href={{
+              pathname: "/",
+              query: { autoCapture: "burst" },
+            }}
+            locale={locale}
             className="rounded-md bg-foreground px-4 py-2 text-center text-background"
           >
             {t("takeAnother")}
           </Link>
           <Link
-            href="/?autoCapture=single"
+            href={{
+              pathname: "/",
+              query: { autoCapture: "single" },
+            }}
+            locale={locale}
             className="rounded-md border border-black/10 px-4 py-2 text-center dark:border-white/20"
           >
             {t("takeSingle")}
           </Link>
           <Link
             href="/gallery"
+            locale={locale}
             className="rounded-md border border-black/10 px-4 py-2 text-center dark:border-white/20"
           >
             {t("viewGallery")}

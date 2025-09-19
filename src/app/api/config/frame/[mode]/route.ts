@@ -17,9 +17,12 @@ function assertFrameMode(mode: string | string[] | undefined): FrameMode {
   throw new Error("Invalid frame mode");
 }
 
-export async function GET(_: Request, context: { params: { mode?: string } }) {
+export async function GET(
+  _: Request,
+  context: { params: Promise<{ mode?: string }> },
+) {
   try {
-    const mode = assertFrameMode(context.params?.mode);
+    const mode = assertFrameMode((await context.params)?.mode);
     const config = await getFrameConfig(mode);
     return NextResponse.json(config);
   } catch (err: unknown) {
@@ -50,10 +53,10 @@ function parseZones(raw: FormDataEntryValue | null): FrameZone[] | undefined {
 
 export async function POST(
   request: Request,
-  context: { params: { mode?: string } },
+  context: { params: Promise<{ mode?: string }> },
 ) {
   try {
-    const mode = assertFrameMode(context.params?.mode);
+    const mode = assertFrameMode((await context.params)?.mode);
     const formData = await request.formData();
     let zones: FrameZone[] | undefined;
     try {

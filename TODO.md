@@ -95,4 +95,5 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [x] Integrate locale-aware routing and translations with `next-intl`.
 - [x] Extract UI copy into translation catalogs and localize existing screens (English, French).
 - [x] Redirect the root path to the preferred locale using the browser language.
+- [x] Update next-intl integration to the current App Router APIs (routing, request config, locale handling).
 - [ ] Add localized content for additional languages beyond English and French.

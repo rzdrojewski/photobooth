@@ -72,8 +72,8 @@ function detectLocale(acceptLanguage: string | null): Locale {
   return defaultLocale;
 }
 
-export default function RootRedirect() {
-  const headerList = headers();
+export default async function RootRedirect() {
+  const headerList = await headers();
   const acceptLanguage = headerList.get("accept-language");
   const locale = detectLocale(acceptLanguage);
 

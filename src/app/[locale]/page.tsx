@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import { CurvedTitle } from "@/components/CurvedTitle";
 import { ImageLine } from "@/components/icons/ImageLine";
@@ -13,7 +13,7 @@ import { useRouter } from "@/i18n/routing";
 export const BURST_FRAME_COUNT = 3;
 const PREVIEW_DEVICE_STORAGE_KEY = "photobooth.previewDeviceId";
 
-export default function Home() {
+function HomeContent() {
   const t = useTranslations("home");
   const commonT = useTranslations("common");
   const [isCapturing, setIsCapturing] = useState(false);
@@ -417,5 +417,13 @@ export default function Home() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }

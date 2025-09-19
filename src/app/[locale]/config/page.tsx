@@ -1,5 +1,11 @@
-import { redirect } from "@/i18n/routing";
+import { redirect } from "next/navigation";
 
-export default function ConfigIndexPage() {
-  redirect({ pathname: "/config/event" });
+type ConfigIndexPageProps = {
+  params: {
+    locale: string;
+  };
+};
+
+export default function ConfigIndexPage({ params }: ConfigIndexPageProps) {
+  redirect(`/${params.locale}/config/event`);
 }

@@ -9,9 +9,10 @@ async function loadMessages(locale: Locale) {
   return (await import("../messages/en.json")).default;
 }
 
-export default getRequestConfig(async ({ locale }) => {
-  const normalizedLocale = locales.includes(locale as Locale)
-    ? (locale as Locale)
+export default getRequestConfig(async ({ requestLocale }) => {
+  const resolvedLocale = (await requestLocale) ?? defaultLocale;
+  const normalizedLocale = locales.includes(resolvedLocale as Locale)
+    ? (resolvedLocale as Locale)
     : defaultLocale;
 
   return {

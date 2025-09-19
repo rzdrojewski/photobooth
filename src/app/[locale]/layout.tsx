@@ -6,12 +6,11 @@ import { NextIntlClientProvider } from "next-intl";
 import {
   getMessages,
   getTranslations,
-  unstable_setRequestLocale,
+  setRequestLocale,
 } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { EventTitleDocumentTitle } from "@/components/EventTitleDocumentTitle";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { type Locale, localeNames, locales } from "@/i18n/config";
 
 import "../globals.css";
@@ -38,18 +37,18 @@ const balloonParty = localFont({
   display: "swap",
 });
 
+type RouteParams = { locale: string };
+
 type LocaleLayoutProps = {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<RouteParams>;
 };
 
-type Params = LocaleLayoutProps["params"];
-
-type LocaleMetadataProps = { params: Params };
+type LocaleMetadataProps = { params: Promise<RouteParams> };
 
 type GenerateMetadataResult = Promise<Metadata>;
 
-type StaticParams = Params;
+type StaticParams = RouteParams;
 
 function assertLocale(input: string): Locale {
   if (locales.includes(input as Locale)) {
@@ -65,7 +64,8 @@ export function generateStaticParams(): StaticParams[] {
 export async function generateMetadata({
   params,
 }: LocaleMetadataProps): GenerateMetadataResult {
-  const locale = assertLocale(params.locale);
+  const { locale: localeParam } = await params;
+  const locale = assertLocale(localeParam);
   const t = await getTranslations({
     locale,
     namespace: "metadata",
@@ -88,8 +88,9 @@ export default async function LocaleLayout({
   children,
   params,
 }: LocaleLayoutProps) {
-  const locale = assertLocale(params.locale);
-  unstable_setRequestLocale(locale);
+  const { locale: localeParam } = await params;
+  const locale = assertLocale(localeParam);
+  setRequestLocale(locale);
   const messages = await getMessages();
 
   return (

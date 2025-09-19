@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { type ChangeEvent, useCallback, useMemo } from "react";
 
@@ -12,6 +12,7 @@ export function LocaleSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const routeParams = useParams();
   const t = useTranslations("common");
 
   const options = useMemo(
@@ -27,11 +28,39 @@ export function LocaleSwitcher() {
     (event: ChangeEvent<HTMLSelectElement>) => {
       const nextLocale = event.target.value as Locale;
       if (nextLocale === currentLocale) return;
-      const params = searchParams?.toString() ?? "";
-      const href = params.length > 0 ? `${pathname}?${params}` : pathname;
-      router.replace(href, { locale: nextLocale });
+      const queryEntries = searchParams
+        ? Array.from(searchParams.entries())
+        : [];
+      const query =
+        queryEntries.length > 0 ? Object.fromEntries(queryEntries) : undefined;
+      const routeParamEntries = Object.entries(routeParams ?? {}).filter(
+        ([key]) => key !== "locale",
+      );
+      const params =
+        routeParamEntries.length > 0
+          ? Object.fromEntries(
+              routeParamEntries.map(([key, value]) => [
+                key,
+                Array.isArray(value) ? value[0] : value,
+              ]),
+            )
+          : undefined;
+      type ReplaceHref = Parameters<typeof router.replace>[0];
+      const hrefForReplace: ReplaceHref = (() => {
+        if (params && query) {
+          return { pathname, params, query } as ReplaceHref;
+        }
+        if (params) {
+          return { pathname, params } as ReplaceHref;
+        }
+        if (query) {
+          return { pathname, query } as ReplaceHref;
+        }
+        return pathname as ReplaceHref;
+      })();
+      router.replace(hrefForReplace, { locale: nextLocale });
     },
-    [currentLocale, pathname, router, searchParams],
+    [currentLocale, pathname, routeParams, router, searchParams],
   );
 
   return (

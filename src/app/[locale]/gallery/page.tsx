@@ -6,14 +6,19 @@ import { listPhotos } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
 
-export default async function GalleryPage() {
-  const t = await getTranslations("gallery");
+type GalleryPageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function GalleryPage({ params }: GalleryPageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "gallery" });
   const photos = listPhotos();
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto flex items-baseline justify-between mb-6">
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <Link className="underline" href="/">
+        <Link className="underline" href="/" locale={locale}>
           {t("backToBooth")}
         </Link>
       </div>
@@ -29,7 +34,8 @@ export default async function GalleryPage() {
           {photos.map((p) => (
             <li key={p.filename} className="group">
               <Link
-                href={`/gallery/${encodeURIComponent(p.id)}`}
+                href={{ pathname: "/gallery/[id]", params: { id: p.id } }}
+                locale={locale}
                 className="block"
               >
                 <Image
