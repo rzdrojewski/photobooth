@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import {
@@ -23,6 +24,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const balloonParty = localFont({
+  src: [
+    {
+      path: "../../../public/fonts/balloon_party/Balloon Party.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-balloon-party",
+  display: "swap",
 });
 
 type LocaleLayoutProps = {
@@ -86,15 +99,10 @@ export default async function LocaleLayout({
       data-locale-name={localeNames[locale]}
     >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${balloonParty.variable} antialiased`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <EventTitleDocumentTitle />
-          <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-end px-6">
-            <div className="pointer-events-auto">
-              <LocaleSwitcher />
-            </div>
-          </div>
           {children}
         </NextIntlClientProvider>
       </body>

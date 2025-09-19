@@ -10,10 +10,11 @@
   },
   "home": {
     "actions": {
+      "help": "Besoin d’aide ?",
       "capturingSingle": "Capture en cours…",
-      "takeSingle": "Prendre une photo",
+      "takeSingle": "Un sourire !",
       "capturingBurst": "Capture de la bande…",
-      "takeBurst": "Prendre une bande photo",
+      "takeBurst": "3 poses de folie",
       "detecting": "Détection…",
       "detectCamera": "Détecter la caméra"
     },
@@ -25,7 +26,7 @@
       "summary": "Résumé"
     },
     "errors": {
-      "captureFailed": "La capture a échoué. Vérifiez la caméra puis réessayez.",
+      "captureFailed": "Oops, petit problème technique ! Réessaie pour voir !",
       "unexpected": "Erreur inattendue"
     }
   },

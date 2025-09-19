@@ -10,6 +10,7 @@
   },
   "home": {
     "actions": {
+      "help": "Need help?",
       "capturingSingle": "Capturing…",
       "takeSingle": "Take Photo",
       "capturingBurst": "Capturing strip…",

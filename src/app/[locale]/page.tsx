@@ -4,6 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { CurvedTitle } from "@/components/CurvedTitle";
+import { ImageLine } from "@/components/icons/ImageLine";
+import { MultiImageLine } from "@/components/icons/MultiImageLine";
 import { useEventTitle } from "@/hooks/useEventTitle";
 import { useRouter } from "@/i18n/routing";
 
@@ -19,17 +22,6 @@ export default function Home() {
   );
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [cameraInfo, setCameraInfo] = useState<null | {
-    ports: string[];
-    selectedPort: string | null;
-    autoDetectRaw: string;
-    summaryRaw: string | null;
-  }>(null);
-
-  const isDebug =
-    (process.env.NEXT_PUBLIC_DEBUG_PHOTOBOOTH ?? "") === "1" ||
-    (process.env.NEXT_PUBLIC_DEBUG_PHOTOBOOTH ?? "").toLowerCase() === "true";
 
   const countdownSeconds = Number(
     process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 3,
@@ -342,25 +334,6 @@ export default function Home() {
     );
   }, [router, runCaptureFlow, runCountdown]);
 
-  const onDetect = useCallback(async () => {
-    setIsDetecting(true);
-    setError(null);
-    setCameraInfo(null);
-    try {
-      const res = await fetch("/api/camera-info");
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `Detect failed (${res.status})`);
-      }
-      const data = await res.json();
-      setCameraInfo(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t("errors.unexpected"));
-    } finally {
-      setIsDetecting(false);
-    }
-  }, [t]);
-
   useEffect(() => {
     if (hasAutoCapture.current) return;
     const mode = searchParams?.get("autoCapture");
@@ -383,9 +356,11 @@ export default function Home() {
       <div className="relative z-10 flex min-h-screen flex-col items-center p-8">
         <div className="flex w-full max-w-3xl flex-1 flex-col items-center gap-10">
           <header className="w-full pt-8 text-center text-white drop-shadow-lg">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              {title}
-            </h1>
+            <CurvedTitle
+              text={title}
+              className="mx-auto max-w-2xl text-[9rem]"
+              radius={600}
+            />
           </header>
           <main className="mb-16 flex w-full flex-1 flex-col items-center justify-end gap-6 text-white">
             {!isCountingDown && (
@@ -394,8 +369,9 @@ export default function Home() {
                   type="button"
                   onClick={onCapture}
                   disabled={isCapturing}
-                  className="flex-1 rounded-2xl bg-foreground px-10 py-6 text-xl font-semibold text-background transition disabled:opacity-60 sm:text-2xl"
+                  className="flex flex-col items-center flex-1 rounded-2xl bg-foreground px-10 py-6 text-xl font-semibold text-background transition disabled:opacity-60 sm:text-2xl"
                 >
+                  <ImageLine width={120} />
                   {isCapturing && activeCapture === "single"
                     ? t("actions.capturingSingle")
                     : t("actions.takeSingle")}
@@ -404,69 +380,20 @@ export default function Home() {
                   type="button"
                   onClick={onBurstCapture}
                   disabled={isCapturing}
-                  className="flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-xl font-semibold text-white transition disabled:opacity-60 sm:text-2xl"
+                  className="flex flex-col items-center flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-xl font-semibold text-white transition disabled:opacity-60 sm:text-2xl"
                 >
+                  <MultiImageLine width={120} />
                   {isCapturing && activeCapture === "burst"
                     ? t("actions.capturingBurst")
                     : t("actions.takeBurst")}
                 </button>
-                {isDebug && (
-                  <button
-                    type="button"
-                    onClick={onDetect}
-                    disabled={isDetecting || isCapturing}
-                    className="flex-1 rounded-2xl border border-white/60 bg-white/10 px-10 py-6 text-lg font-medium text-white transition disabled:opacity-60"
-                  >
-                    {isDetecting
-                      ? t("actions.detecting")
-                      : t("actions.detectCamera")}
-                  </button>
-                )}
               </div>
             )}
 
             {error && (
-              <p className="max-w-prose text-center text-sm text-red-200">
+              <p className="max-w-prose text-center text-2xl text-red-200">
                 {error}
               </p>
-            )}
-
-            {isDebug && cameraInfo && (
-              <div className="w-full max-w-xl rounded-xl border border-white/20 bg-black/40 p-4 shadow-lg backdrop-blur">
-                <h2 className="mb-2 text-lg font-medium text-white">
-                  {t("debug.title")}
-                </h2>
-                <div className="mb-2 text-sm text-white">
-                  <div>
-                    {t("debug.ports")}:{" "}
-                    {cameraInfo.ports?.length
-                      ? cameraInfo.ports.join(", ")
-                      : commonT("none")}
-                  </div>
-                  <div>
-                    {t("debug.selectedPort")}:{" "}
-                    {cameraInfo.selectedPort ?? commonT("none")}
-                  </div>
-                </div>
-                <details className="mb-2 text-white">
-                  <summary className="cursor-pointer">
-                    {t("debug.autoDetectOutput")}
-                  </summary>
-                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-black/60 p-2 text-xs text-white">
-                    {cameraInfo.autoDetectRaw}
-                  </pre>
-                </details>
-                {cameraInfo.summaryRaw && (
-                  <details className="text-white">
-                    <summary className="cursor-pointer">
-                      {t("debug.summary")}
-                    </summary>
-                    <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-black/60 p-2 text-xs text-white">
-                      {cameraInfo.summaryRaw}
-                    </pre>
-                  </details>
-                )}
-              </div>
             )}
           </main>
         </div>
