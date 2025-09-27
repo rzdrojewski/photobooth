@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import './styles.css'
 
 type CurvedTitleProps = {
   text: string;
@@ -17,9 +18,8 @@ export function CurvedTitle({
 }: CurvedTitleProps) {
   const pathId = useId();
   const diameter = radius * 2;
-  const verticalPadding = Math.max(60, radius * 0.35);
-  const baseline = radius + verticalPadding;
-  const viewBoxHeight = baseline + verticalPadding * 0.25;
+  const baseline = radius + (diameter / 8);
+  const viewBoxHeight = baseline / 2;
   const baseClass = "font-balloon relative block";
   const combinedClass = className ? `${baseClass} ${className}` : baseClass;
 
@@ -39,9 +39,7 @@ export function CurvedTitle({
           />
         </defs>
         <text
-          fill="currentColor"
-          fontWeight={700}
-          style={{ fontSize: "1em", letterSpacing: "0.18em" }}
+          fill="white"
         >
           <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
             {text}

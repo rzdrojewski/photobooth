@@ -353,17 +353,17 @@ function HomeContent() {
       style={{ backgroundImage: "url(/wallpaper/wallpaper.png)" }}
     >
       <div className="absolute inset-0 bg-black/45" />
+      {!isCountingDown && (
       <div className="relative z-10 flex min-h-screen flex-col items-center p-8">
         <div className="flex w-full max-w-3xl flex-1 flex-col items-center gap-10">
           <header className="w-full pt-8 text-center text-white drop-shadow-lg">
             <CurvedTitle
               text={title}
-              className="mx-auto max-w-2xl text-[9rem]"
-              radius={600}
+              className="mx-auto max-w-2xl text-[16rem]"
+              radius={800}
             />
           </header>
           <main className="mb-16 flex w-full flex-1 flex-col items-center justify-end gap-6 text-white">
-            {!isCountingDown && (
               <div className="flex w-full flex-col items-stretch gap-4 sm:flex-row sm:justify-center">
                 <button
                   type="button"
@@ -388,8 +388,6 @@ function HomeContent() {
                     : t("actions.takeBurst")}
                 </button>
               </div>
-            )}
-
             {error && (
               <p className="max-w-prose text-center text-2xl text-red-200">
                 {error}
@@ -398,6 +396,7 @@ function HomeContent() {
           </main>
         </div>
       </div>
+      )}
       {(showPreview || isCountingDown) && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
           {showPreview && (
