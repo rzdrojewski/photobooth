@@ -3,7 +3,7 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command. Document any workflow specifics in the project README or onboarding notes if additional guidance is required.
 
 ## Summary
 
@@ -31,7 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Guided Simplicity**: Explain how the feature keeps a single, obvious guest action per screen and surfaces countdown, success, and error states.
+- **Dependable Capture Flow**: Describe how camera access stays serialized, how failures fall back, and how logs/cleanup will be validated on hardware.
+- **Localized & Inclusive Content**: List affected locales, translation catalog updates, and accessibility checks planned for this work.
+- **Standards-First Web Delivery**: Confirm the solution relies on semantic HTML/CSS/JS and note any standards deviations that need explicit approval.
+- **Disciplined Dependencies & Security Hygiene**: Enumerate new dependencies or env changes, why they are required, and how risk will be mitigated.
 
 ## Project Structure
 

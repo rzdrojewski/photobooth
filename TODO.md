@@ -97,3 +97,7 @@ High-level goal: One-click capture via gphoto2, show preview, and display a QR c
 - [x] Redirect the root path to the preferred locale using the browser language.
 - [x] Update next-intl integration to the current App Router APIs (routing, request config, locale handling).
 - [ ] Add localized content for additional languages beyond English and French.
+
+## Governance
+
+- [x] 2025-10-07 — Adopted Constitution v1.0.0 (guided simplicity, dependable capture, localization, standards-first delivery, disciplined dependencies).

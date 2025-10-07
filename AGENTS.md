@@ -43,4 +43,3 @@
 
 - Scope: these rules apply to the entire repository.
 - Prefer minimal, surgical diffs aligned with the style above; do not reformat unrelated files.
-- Keep track of the progress in the TODO.md file
