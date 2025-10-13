@@ -1,7 +1,6 @@
 "use client";
 
 import { useId } from "react";
-import './styles.css'
 
 type CurvedTitleProps = {
   text: string;
