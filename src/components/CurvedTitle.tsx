@@ -17,7 +17,7 @@ export function CurvedTitle({
 }: CurvedTitleProps) {
   const pathId = useId();
   const diameter = radius * 2;
-  const baseline = radius + (diameter / 8);
+  const baseline = radius + diameter / 8;
   const viewBoxHeight = baseline / 2;
   const baseClass = "font-balloon relative block";
   const combinedClass = className ? `${baseClass} ${className}` : baseClass;
@@ -37,9 +37,7 @@ export function CurvedTitle({
             d={`M0 ${baseline} A ${radius} ${radius} 0 0 1 ${diameter} ${baseline}`}
           />
         </defs>
-        <text
-          fill="white"
-        >
+        <text fill="white">
           <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
             {text}
           </textPath>
