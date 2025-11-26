@@ -15,6 +15,22 @@ export function ensureDir(path: string) {
   } catch {}
 }
 
+async function deleteCameraFiles(
+  bin: string,
+  baseArgs: string[],
+  timeout: number,
+) {
+  try {
+    await runGphoto(
+      bin,
+      [...baseArgs, "--delete-all-files", "--recurse", "--quiet"],
+      timeout,
+    );
+  } catch (err) {
+    console.warn("Failed to delete files from camera", err);
+  }
+}
+
 function runGphoto(
   bin: string,
   args: string[],
@@ -151,6 +167,8 @@ export async function capturePhoto(
     ],
     timeout,
   );
+
+  void deleteCameraFiles(bin, baseArgs, timeout);
 }
 
 export async function triggerCaptureAndGetIndex(
@@ -279,5 +297,6 @@ export async function downloadFramesRange(
     results.push(newPath);
   }
 
+  void deleteCameraFiles(bin, baseArgs, timeout);
   return results;
 }

@@ -24,7 +24,7 @@ function HomeContent() {
   const [error, setError] = useState<string | null>(null);
 
   const countdownSeconds = Number(
-    process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 3,
+    process.env.NEXT_PUBLIC_COUNTDOWN_SECONDS ?? 5,
   );
   const [count, setCount] = useState<number>(countdownSeconds);
 
@@ -196,49 +196,49 @@ function HomeContent() {
 
   const runCountdown = useCallback(
     async (trigger?: () => void | Promise<void>) => {
-      if (countdownSeconds <= 0) {
+      const duration = Math.max(0, countdownSeconds);
+
+      if (duration <= 1) {
         setCount(0);
         setIsCountingDown(false);
         setShowPreview(false);
-        if (trigger) {
-          await trigger();
-        }
+        if (trigger) await trigger();
         return;
       }
+
       await ensurePreviewStream();
       setShowPreview(true);
       setIsCountingDown(true);
-      setCount(countdownSeconds);
+      setCount(duration);
+
       let triggerPromise: Promise<void> | null = null;
+      let triggerTimeout: ReturnType<typeof setTimeout> | null = null;
       await new Promise<void>((resolve) => {
-        let remaining = countdownSeconds;
-        setCount(remaining);
+        let remaining = duration;
+        const triggerDelayMs = Math.max(0, (duration - 1.5) * 1000);
+        if (trigger) {
+          triggerTimeout = setTimeout(() => {
+            triggerPromise = Promise.resolve(trigger());
+          }, triggerDelayMs);
+        }
         const timer = setInterval(() => {
           remaining -= 1;
           setCount(remaining);
-          if (remaining === 1 && trigger && !triggerPromise) {
-            try {
-              const possible = trigger();
-              triggerPromise = Promise.resolve(possible).then(() => {});
-            } catch (err) {
-              triggerPromise = Promise.reject(err);
-            }
-          }
+
           if (remaining <= 0) {
             clearInterval(timer);
-            setIsCountingDown(false);
-            setShowPreview(false);
+            if (triggerTimeout) {
+              clearTimeout(triggerTimeout);
+            }
             resolve();
           }
         }, 1000);
       });
-      if (trigger && !triggerPromise) {
-        try {
-          const possible = trigger();
-          triggerPromise = Promise.resolve(possible).then(() => {});
-        } catch (err) {
-          triggerPromise = Promise.reject(err);
-        }
+
+      setIsCountingDown(false);
+      setShowPreview(false);
+      if (!triggerPromise && trigger) {
+        triggerPromise = Promise.resolve(trigger());
       }
       if (triggerPromise) {
         await triggerPromise;
